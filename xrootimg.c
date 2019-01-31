@@ -190,8 +190,8 @@ int load_pixmaps_from_image()
 {
         int ret;
         const char *err;
-        GifFileType *gif;
-        DATA32 *canvas;
+        GifFileType *gif = NULL;
+        DATA32 *canvas = NULL;
         Imlib_Image img, img_scaled;
 
         gif = DGifOpenFileName(opts.image, &ret);
@@ -237,13 +237,10 @@ int load_pixmaps_from_image()
                 Background_anim.frames[i].p = XCreatePixmap(display, root, root_attr.width,
                                                             root_attr.height, root_attr.depth);
 
-                puts("test");
                 /* Render canvas on pixmap with imlib2 */
-                imlib_context_set_display(display);
                 img = imlib_create_image_using_data(gif->SWidth, gif->SHeight, canvas);
                 imlib_context_set_image(img);
                 img_scaled = imlib_create_cropped_scaled_image(0, 0, gif->SWidth, gif->SHeight, root_attr.width, root_attr.height);
-                // imlib_free_image();
                 imlib_context_set_image(img_scaled);
                 imlib_context_set_drawable(Background_anim.frames[i].p);
                 imlib_context_set_anti_alias(0);
@@ -251,7 +248,10 @@ int load_pixmaps_from_image()
                 imlib_context_set_blend(1);
                 imlib_context_set_angle(0);
                 imlib_render_image_on_drawable(0, 0); // TODO: Segfaults for a reason
-                // imlib_free_image();
+                imlib_context_set_image(img);
+                imlib_free_image();
+                imlib_context_set_image(img_scaled);
+                imlib_free_image();
         }
 
         goto exit;
@@ -259,8 +259,8 @@ error:
         err = GifErrorString(ret);
         fprintf(stderr, "GIFLIB: %s\n", err);
 exit:
-        // if(canvas) free(canvas);
-        // DGifCloseFile(gif,&ret);
+        if(canvas) free(canvas);
+        if(gif) DGifCloseFile(gif,&ret);
         return ret;
 }
 
