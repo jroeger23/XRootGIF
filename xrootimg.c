@@ -11,7 +11,7 @@
 #include <getopt.h>
 
 #define EXIT_ON_ERROR 1
-#define GRGBTOD32(grgb)(grgb.Red << 16 | grgb.Green << 8 | grgb.Blue)
+#define GRGBTOD32(grgb)(0 | grgb.Red << 16 | grgb.Green << 8 | grgb.Blue)
 
 static Display *display;
 static Window root;
@@ -151,36 +151,51 @@ int load_pixmap_sample()
 
 static void dispose_image(GifFileType *gif, GraphicsControlBlock *gcb, SavedImage *img, DATA32 *canvas)
 {
-        if(gcb->DisposalMode == DISPOSE_DO_NOT) return;
+        if(gcb->DisposalMode == DISPOSE_DO_NOT){
+                return;
+        }
 
+
+        int num;
         GifByteType *raster;
         GifImageDesc *desc;
         DATA32 c;
         GifColorType color;
         GifByteType color_code;
 
+
         raster = img->RasterBits;
         desc = &img->ImageDesc;
+
+        if(desc->ColorMap)
+                num = desc->ColorMap->ColorCount;
+        else
+                num = gif->SColorMap->ColorCount;
+
+        printf("Colors: %d\n", num);
 
         if(gcb->DisposalMode == DISPOSE_BACKGROUND) {
                 color = gif->SColorMap->Colors[gif->SBackGroundColor];
                 c = GRGBTOD32(color);
-                for(int y = 0; desc->Height; ++y) {
+                for(int y = 0; y < desc->Height; ++y) {
+                        int off = desc->Top*gif->SWidth + y*gif->SWidth + desc->Left;
                         for(int x = 0; x < desc->Width; ++x) {
-                                int off = desc->Top*y*gif->SWidth + desc->Left;
                                 canvas[off + x] = c;
                         }
                 }
-        } else if(gcb->DisposalMode == DISPOSAL_UNSPECIFIED) {
-                for(int y = 0; desc->Height; ++y) {
+        } else if(gcb->DisposalMode != DISPOSE_PREVIOUS) {
+                for(int y = 0; y < desc->Height; ++y) {
+                        int off = desc->Top*gif->SWidth + y*gif->SWidth + desc->Left;
                         for(int x = 0; x < desc->Width; ++x) {
-                                int off = desc->Top*y*gif->SWidth + desc->Left;
                                 int yoff = y*desc->Width;
                                 color_code = raster[yoff + x];
-                                color = desc->ColorMap->Colors[color_code];
+                                if(desc->ColorMap)
+                                        color = desc->ColorMap->Colors[color_code];
+                                else
+                                        color = gif->SColorMap->Colors[color_code];
                                 c = GRGBTOD32(color);
                                 if(gcb->TransparentColor == -1 || gcb->TransparentColor != color_code)
-					canvas[off + x] = c;
+                                        canvas[off + x] = c;
                         }
                 }
         }
@@ -193,6 +208,7 @@ int load_pixmaps_from_image()
         GifFileType *gif = NULL;
         DATA32 *canvas = NULL;
         Imlib_Image img, img_scaled;
+        Pixmap pmap;
 
         gif = DGifOpenFileName(opts.image, &ret);
         if(!gif) goto error;
@@ -234,15 +250,17 @@ int load_pixmaps_from_image()
                 dispose_image(gif, gcb, &gif->SavedImages[i], canvas);
 
                 Background_anim.frames[i].dur = 10000*gcb->DelayTime;
-                Background_anim.frames[i].p = XCreatePixmap(display, root, root_attr.width,
-                                                            root_attr.height, root_attr.depth);
+                pmap = XCreatePixmap(display, root, root_attr.width,
+                                     root_attr.height, root_attr.depth);
+                XSync(display, false);
 
                 /* Render canvas on pixmap with imlib2 */
-                img = imlib_create_image_using_data(gif->SWidth, gif->SHeight, canvas);
+                img = imlib_create_image_using_copied_data(gif->SWidth, gif->SHeight, canvas);
                 imlib_context_set_image(img);
                 img_scaled = imlib_create_cropped_scaled_image(0, 0, gif->SWidth, gif->SHeight, root_attr.width, root_attr.height);
                 imlib_context_set_image(img_scaled);
-                imlib_context_set_drawable(Background_anim.frames[i].p);
+                imlib_context_set_display(display);
+                imlib_context_set_drawable(pmap);
                 imlib_context_set_anti_alias(0);
                 imlib_context_set_dither(1);
                 imlib_context_set_blend(1);
@@ -252,6 +270,13 @@ int load_pixmaps_from_image()
                 imlib_free_image();
                 imlib_context_set_image(img_scaled);
                 imlib_free_image();
+                Background_anim.frames[i].p = pmap;
+                int csum = 0x0;
+                for(int i = 0; i < gif->SWidth*gif->SHeight; ++i) {
+                        csum += canvas[i];
+                        csum %= 0xFFFFFFFF;
+                }
+                printf("Csum: %d\n", csum);
         }
 
         goto exit;
