@@ -260,23 +260,19 @@ int load_pixmaps_from_image()
                 img_scaled = imlib_create_cropped_scaled_image(0, 0, gif->SWidth, gif->SHeight, root_attr.width, root_attr.height);
                 imlib_context_set_image(img_scaled);
                 imlib_context_set_display(display);
+                imlib_context_set_visual(DefaultVisual(display, screen_number));
+                imlib_context_set_colormap(DefaultColormap(display, screen_number));
                 imlib_context_set_drawable(pmap);
                 imlib_context_set_anti_alias(0);
                 imlib_context_set_dither(1);
                 imlib_context_set_blend(1);
                 imlib_context_set_angle(0);
-                imlib_render_image_on_drawable(0, 0); // TODO: Segfaults for a reason
+                imlib_render_image_on_drawable(0, 0);
                 imlib_context_set_image(img);
                 imlib_free_image();
                 imlib_context_set_image(img_scaled);
                 imlib_free_image();
                 Background_anim.frames[i].p = pmap;
-                int csum = 0x0;
-                for(int i = 0; i < gif->SWidth*gif->SHeight; ++i) {
-                        csum += canvas[i];
-                        csum %= 0xFFFFFFFF;
-                }
-                printf("Csum: %d\n", csum);
         }
 
         goto exit;
@@ -361,7 +357,7 @@ int main(int argc, char **argv)
 
         load_pixmaps_from_image();
 
-        // anim_loop();
+        anim_loop();
 
         unload_pixmaps();
 
