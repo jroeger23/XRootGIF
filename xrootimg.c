@@ -13,12 +13,12 @@
 #define EXIT_ON_ERROR 1
 #define GRGBTOD32(grgb)(0 | grgb.Red << 16 | grgb.Green << 8 | grgb.Blue)
 
-static Display *display;
-static Window root;
-static int screen_number;
-static Colormap cmap;
+static int               screen_number;
+static Display           *display;
+static Window            root;
+static Colormap          cmap;
 static XWindowAttributes root_attr;
-static Atom prop_root_pmap;
+static Atom              prop_root_pmap;
 
 static volatile bool do_anim = true;
 
@@ -37,6 +37,7 @@ static struct {
         char *image;
         char *display;
         char *screen;
+        double speed;
 } opts;
 
 int unload_pixmaps();
@@ -149,13 +150,8 @@ int load_pixmap_sample()
         return 0;
 }
 
-static void dispose_image(GifFileType *gif, GraphicsControlBlock *gcb, SavedImage *img, DATA32 *canvas)
+static void render_image(GifFileType *gif, GraphicsControlBlock *gcb, SavedImage *img, DATA32 *canvas)
 {
-        if(gcb->DisposalMode == DISPOSE_DO_NOT){
-                return;
-        }
-
-
         int num;
         GifByteType *raster;
         GifImageDesc *desc;
@@ -172,7 +168,7 @@ static void dispose_image(GifFileType *gif, GraphicsControlBlock *gcb, SavedImag
         else
                 num = gif->SColorMap->ColorCount;
 
-        printf("Colors: %d\n", num);
+        printf("\tColors: %d\n", num);
 
         if(gcb->DisposalMode == DISPOSE_BACKGROUND) {
                 color = gif->SColorMap->Colors[gif->SBackGroundColor];
@@ -198,17 +194,19 @@ static void dispose_image(GifFileType *gif, GraphicsControlBlock *gcb, SavedImag
                                         canvas[off + x] = c;
                         }
                 }
-        }
+        } // TODO: implement other dispose modes?
 }
 
 int load_pixmaps_from_image()
 {
-        int ret;
-        const char *err;
-        GifFileType *gif = NULL;
-        DATA32 *canvas = NULL;
-        Imlib_Image img, img_scaled;
-        Pixmap pmap;
+        int                  ret;
+        const char           *err;
+        GifFileType          *gif = NULL;
+        DATA32               *canvas = NULL;
+        Imlib_Image          img, img_scaled;
+        Pixmap               pmap;
+        GraphicsControlBlock gcb;
+        GifImageDesc         desc;
 
         gif = DGifOpenFileName(opts.image, &ret);
         if(!gif) goto error;
@@ -225,37 +223,25 @@ int load_pixmaps_from_image()
 
         canvas = malloc(sizeof(DATA32) * gif->SWidth * gif->SHeight);
 
+        //TODO: first image is somewhat displaced
         /* Render each image */
         for(int i = 0; i < gif->ImageCount; ++i) {
-                ExtensionBlock *ext;
-                GraphicsControlBlock *gcb = NULL;
-                GifImageDesc desc = gif->SavedImages[i].ImageDesc;
+                desc = gif->SavedImages[i].ImageDesc;
 
-                printf("Image %d -- Top: %d; Left, %d; Width: %d; Height: %d; Interlace: %s\n", i,
+                printf("Image %u -- Top: %u; Left, %d; Width: %u; Height: %u; Interlace: %s\n", i,
                        desc.Top, desc.Left, desc.Width, desc.Height, desc.Interlace ? "True" : "False");
 
-                /* Search for the Graphics Control Block */
-                for(int j = 0; j < gif->SavedImages[i].ExtensionBlockCount; ++j) {
-                        ext = &gif->SavedImages[i].ExtensionBlocks[j];
-                        if(ext->Function == GRAPHICS_EXT_FUNC_CODE) {
-                                gcb = (GraphicsControlBlock*)ext;
-                                break;
-                        }
-                }
+                /* Render image on canvas */
+                DGifSavedExtensionToGCB(gif, i, &gcb);
+                render_image(gif, &gcb, &gif->SavedImages[i], canvas);
 
-                if(!gcb) {
-                        // TODO: Handle absence of GCB
-                }
 
-                dispose_image(gif, gcb, &gif->SavedImages[i], canvas);
-
-                Background_anim.frames[i].dur = 10000*gcb->DelayTime;
                 pmap = XCreatePixmap(display, root, root_attr.width,
                                      root_attr.height, root_attr.depth);
                 XSync(display, false);
 
                 /* Render canvas on pixmap with imlib2 */
-                img = imlib_create_image_using_copied_data(gif->SWidth, gif->SHeight, canvas);
+                img = imlib_create_image_using_data(gif->SWidth, gif->SHeight, canvas);
                 imlib_context_set_image(img);
                 img_scaled = imlib_create_cropped_scaled_image(0, 0, gif->SWidth, gif->SHeight, root_attr.width, root_attr.height);
                 imlib_context_set_image(img_scaled);
@@ -272,7 +258,9 @@ int load_pixmaps_from_image()
                 imlib_free_image();
                 imlib_context_set_image(img_scaled);
                 imlib_free_image();
+
                 Background_anim.frames[i].p = pmap;
+                Background_anim.frames[i].dur = opts.speed*(10000*gcb.DelayTime);
         }
 
         goto exit;
@@ -289,7 +277,6 @@ int unload_pixmaps()
 {
         for(int i = 0; i < Background_anim.num; ++i) {
                 XFreePixmap(display, Background_anim.frames[i].p);
-                puts("Cleaned");
         }
 
         free(Background_anim.frames);
@@ -305,9 +292,11 @@ void anim_loop()
 
         while(do_anim) {
                 f = &Background_anim.frames[Background_anim.cur];
+
                 /* Used for pseudo-transparency */
                 XChangeProperty(display, root, prop_root_pmap, XA_PIXMAP, 32,
                                 PropModeReplace, (unsigned char *) &f->p, 1);
+
                 XSetWindowBackgroundPixmap(display, root, f->p);
                 XClearWindow(display, root);
 		XFlush(display);
@@ -321,14 +310,16 @@ int parse_args(int argc, char **argv)
 {
         char c;
         int longind = 0;
-        const char *optstring = "i:d:s:";
+        const char *optstring = "i:d:S:s:";
         struct option longopts[] = {
                 {"image", required_argument, NULL, 'i'},
                 {"display", required_argument, NULL, 'd'},
-                {"screen", required_argument, NULL, 's'},
+                {"screen", required_argument, NULL, 'S'},
+                {"speed", required_argument, NULL, 's'},
                 {NULL, no_argument, NULL, 0}
         };
 
+        opts.speed = 1.0;
         while( (c = getopt_long(argc, argv, optstring, longopts, &longind)) != -1) {
                 switch(c) {
                 case 'i':
@@ -337,8 +328,14 @@ int parse_args(int argc, char **argv)
                 case 'd':
                         opts.display = optarg;
                         break;
-                case 's':
+                case 'S':
                         opts.screen = optarg;
+                        break;
+                case 's':
+                        opts.speed = atof(optarg);
+                        if(opts.speed <= 0.0)
+                                opts.speed = 1.0;
+                        opts.speed = 1.0/opts.speed;
                         break;
                 }
         }
