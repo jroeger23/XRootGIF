@@ -10,6 +10,7 @@
 #include <signal.h>
 #include <getopt.h>
 
+#define VERSION 1
 #define EXIT_ON_ERROR 1
 #define GRGBTOD32(grgb)(0 | grgb.Red << 16 | grgb.Green << 8 | grgb.Blue)
 
@@ -17,10 +18,11 @@ static int               screen_number;
 static Display           *display;
 static Window            root;
 static Colormap          cmap;
+static Visual            *visual;
 static XWindowAttributes root_attr;
 static Atom              prop_root_pmap;
 
-static volatile bool do_anim = true;
+static bool do_anim = false;
 
 struct Background_frame{
         Pixmap p;
@@ -38,6 +40,10 @@ static struct {
         char *display;
         char *screen;
         double speed;
+        char anti_alias;
+        bool performance;
+        double target_fps;
+        bool do_test;
 } opts;
 
 int unload_pixmaps();
@@ -63,12 +69,15 @@ int error_handler(Display *d, XErrorEvent *e)
 
 int prepare()
 {
+        int ret = 0;
+
         XSetErrorHandler(&error_handler);
 
         display = XOpenDisplay(opts.display);
         if(!display) {
                 fputs("Could not open Display...\n", stderr);
-                goto display;
+                ret = 1;
+                goto exit;
         }
 
         if(opts.screen)
@@ -80,13 +89,18 @@ int prepare()
 
         prop_root_pmap = XInternAtom(display, "_XROOTPMAP_ID", false);
 
-        XGetWindowAttributes(display, root, &root_attr);
+        if(!XGetWindowAttributes(display, root, &root_attr)) {
+                fputs("Could not get Window attributes...\n", stderr);
+                ret = 2;
+                goto exit;
+        }
 
         cmap = DefaultColormap(display, screen_number);
 
-        return 0;
-display:
-        return 1;
+        visual = DefaultVisual(display, screen_number);
+
+exit:
+        return ret;
 }
 
 int load_pixmap_sample()
@@ -147,59 +161,78 @@ int load_pixmap_sample()
 
         XFreeGC(display, gc);
 
+        do_anim = true;
+
         return 0;
 }
 
 static void render_image(GifFileType *gif, GraphicsControlBlock *gcb, SavedImage *img, DATA32 *canvas)
 {
-        int num;
-        GifByteType *raster;
+        static int   total = 0;
+        int          num;
+        int          off, roff;
+        GifByteType  *raster;
         GifImageDesc *desc;
-        DATA32 c;
+        DATA32       c;
         GifColorType color;
-        GifByteType color_code;
+        GifByteType  color_code;
 
 
         raster = img->RasterBits;
         desc = &img->ImageDesc;
 
         if(desc->ColorMap)
-                num = desc->ColorMap->ColorCount;
+                total += (num = desc->ColorMap->ColorCount);
         else
                 num = gif->SColorMap->ColorCount;
+        if(!total) total = num;
 
-        printf("\tColors: %d\n", num);
+        printf("\tCurrent Colors: %d, Total: %d\n", num, total);
+        printf("\tDispose: ");
 
-        if(gcb->DisposalMode == DISPOSE_BACKGROUND) {
+        switch(gcb->DisposalMode) {
+        case DISPOSE_PREVIOUS:
+                puts("PREVIOUS (not implemented yet)");
+                break;
+        case DISPOSE_BACKGROUND:
+                puts("BACKGROUND");
                 color = gif->SColorMap->Colors[gif->SBackGroundColor];
                 c = GRGBTOD32(color);
                 for(int y = 0; y < desc->Height; ++y) {
-                        int off = desc->Top*gif->SWidth + y*gif->SWidth + desc->Left;
+                        off = desc->Top*gif->SWidth + y*gif->SWidth + desc->Left;
                         for(int x = 0; x < desc->Width; ++x) {
                                 canvas[off + x] = c;
                         }
                 }
-        } else if(gcb->DisposalMode != DISPOSE_PREVIOUS) {
+                break;
+        case DISPOSAL_UNSPECIFIED: /* Don't dispose */
+                printf("UNSPECIFIED, falling back to ");
+        case DISPOSE_DO_NOT:
+                puts("NONE");
+                color = gif->SColorMap->Colors[gif->SBackGroundColor];
                 for(int y = 0; y < desc->Height; ++y) {
-                        int off = desc->Top*gif->SWidth + y*gif->SWidth + desc->Left;
+                        off = desc->Top*gif->SWidth + y*gif->SWidth + desc->Left;
                         for(int x = 0; x < desc->Width; ++x) {
-                                int yoff = y*desc->Width;
-                                color_code = raster[yoff + x];
+                                roff = y*desc->Width;
+                                color_code = raster[roff + x];
                                 if(desc->ColorMap)
                                         color = desc->ColorMap->Colors[color_code];
                                 else
                                         color = gif->SColorMap->Colors[color_code];
                                 c = GRGBTOD32(color);
-                                if(gcb->TransparentColor == -1 || gcb->TransparentColor != color_code)
+                                if(gcb->TransparentColor == -1
+                                   || gcb->TransparentColor != color_code)
                                         canvas[off + x] = c;
                         }
                 }
-        } // TODO: implement other dispose modes?
+                break;
+        }
 }
 
 int load_pixmaps_from_image()
 {
         int                  ret;
+        double               avg_delay = 0;
         const char           *err;
         GifFileType          *gif = NULL;
         DATA32               *canvas = NULL;
@@ -214,22 +247,19 @@ int load_pixmaps_from_image()
         ret = DGifSlurp(gif);
         if(!gif) goto error;
 
-        printf("GIF - Frames: %d; Width: %d; Height: %d\n",
-               gif->ImageCount, gif->SWidth, gif->SHeight);
-
         Background_anim.num = gif->ImageCount;
         Background_anim.frames = malloc(sizeof(struct Background_frame)
                                         * gif->ImageCount);
 
         canvas = malloc(sizeof(DATA32) * gif->SWidth * gif->SHeight);
 
-        //TODO: first image is somewhat displaced
         /* Render each image */
         for(int i = 0; i < gif->ImageCount; ++i) {
                 desc = gif->SavedImages[i].ImageDesc;
 
                 printf("Image %u -- Top: %u; Left, %d; Width: %u; Height: %u; Interlace: %s\n", i,
-                       desc.Top, desc.Left, desc.Width, desc.Height, desc.Interlace ? "True" : "False");
+                       desc.Top, desc.Left, desc.Width,
+                       desc.Height, desc.Interlace ? "True" : "False");
 
                 /* Render image on canvas */
                 DGifSavedExtensionToGCB(gif, i, &gcb);
@@ -241,28 +271,47 @@ int load_pixmaps_from_image()
                 XSync(display, false);
 
                 /* Render canvas on pixmap with imlib2 */
-                img = imlib_create_image_using_data(gif->SWidth, gif->SHeight, canvas);
+                img = imlib_create_image_using_data(gif->SWidth,
+                                                    gif->SHeight,
+                                                    canvas);
                 imlib_context_set_image(img);
-                img_scaled = imlib_create_cropped_scaled_image(0, 0, gif->SWidth, gif->SHeight, root_attr.width, root_attr.height);
+                img_scaled = imlib_create_cropped_scaled_image(
+                        0, 0, gif->SWidth, gif->SHeight, root_attr.width,
+                        root_attr.height);
                 imlib_context_set_image(img_scaled);
                 imlib_context_set_display(display);
-                imlib_context_set_visual(DefaultVisual(display, screen_number));
-                imlib_context_set_colormap(DefaultColormap(display, screen_number));
+                imlib_context_set_visual(visual);
+                imlib_context_set_colormap(cmap);
                 imlib_context_set_drawable(pmap);
-                imlib_context_set_anti_alias(0);
+                imlib_context_set_anti_alias(opts.anti_alias);
                 imlib_context_set_dither(1);
                 imlib_context_set_blend(1);
                 imlib_context_set_angle(0);
                 imlib_render_image_on_drawable(0, 0);
-                imlib_context_set_image(img);
                 imlib_free_image();
-                imlib_context_set_image(img_scaled);
+                imlib_context_set_image(img);
                 imlib_free_image();
 
                 Background_anim.frames[i].p = pmap;
                 Background_anim.frames[i].dur = opts.speed*(10000*gcb.DelayTime);
+                avg_delay+= gcb.DelayTime;
         }
 
+        avg_delay = 100/(avg_delay/gif->ImageCount);
+
+        /* Scale to target performance */
+        if(opts.performance) {
+                opts.speed = avg_delay / opts.target_fps;
+                for(int i = 0; i < Background_anim.num; ++i) {
+                        Background_anim.frames[i].dur *= opts.speed;
+                }
+        }
+
+        printf("Loaded GIF! - Frames: %d; Width: %d; Height: %d; FPS: %f (Scaled: %f)\n",
+               gif->ImageCount, gif->SWidth, gif->SHeight,
+               avg_delay, avg_delay/opts.speed);
+
+        do_anim = true;
         goto exit;
 error:
         err = GifErrorString(ret);
@@ -275,6 +324,7 @@ exit:
 
 int unload_pixmaps()
 {
+        puts("Cleanung up...");
         for(int i = 0; i < Background_anim.num; ++i) {
                 XFreePixmap(display, Background_anim.frames[i].p);
         }
@@ -308,18 +358,29 @@ void anim_loop()
 
 int parse_args(int argc, char **argv)
 {
+        double tmp;
         char c;
         int longind = 0;
-        const char *optstring = "i:d:S:s:";
+        const char *optstring = "i:d:S:s:apt:T";
         struct option longopts[] = {
                 {"image", required_argument, NULL, 'i'},
                 {"display", required_argument, NULL, 'd'},
                 {"screen", required_argument, NULL, 'S'},
                 {"speed", required_argument, NULL, 's'},
+                {"anti-alias-off", no_argument, NULL, 'a'},
+                {"performance", no_argument, NULL, 'p'},
+                {"target-fps", required_argument, NULL, 't'},
+                {"test-pattern", no_argument, NULL, 'T'},
                 {NULL, no_argument, NULL, 0}
         };
 
+        /* Defaults */
         opts.speed = 1.0;
+        opts.anti_alias = 1;
+        opts.target_fps = 5.0;
+        opts.performance = false;
+        opts.do_test = false;
+
         while( (c = getopt_long(argc, argv, optstring, longopts, &longind)) != -1) {
                 switch(c) {
                 case 'i':
@@ -332,10 +393,23 @@ int parse_args(int argc, char **argv)
                         opts.screen = optarg;
                         break;
                 case 's':
-                        opts.speed = atof(optarg);
-                        if(opts.speed <= 0.0)
-                                opts.speed = 1.0;
-                        opts.speed = 1.0/opts.speed;
+                        tmp = atof(optarg);
+                        if(tmp > 0.0)
+                                opts.speed = 1.0/tmp;
+                        break;
+                case 'a':
+                        opts.anti_alias = 0;
+                        break;
+                case 'p':
+                        opts.performance = true;
+                        break;
+                case 't':
+                        tmp = atof(optarg);
+                        if(tmp> 0.0)
+                                opts.target_fps = tmp;
+                        break;
+                case 'T':
+                        opts.do_test = true;
                         break;
                 }
         }
@@ -352,7 +426,10 @@ int main(int argc, char **argv)
         if(prepare())
                return 1;
 
-        load_pixmaps_from_image();
+        if(opts.do_test)
+                load_pixmap_sample();
+        else
+                load_pixmaps_from_image();
 
         anim_loop();
 
