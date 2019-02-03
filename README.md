@@ -33,9 +33,11 @@ the framerate.
 
 # Building
 The following libraries are used by XRootGIF:
+
 - libx11
 - giflib
 - imlib2
+
 To compile, simply run
 
 ``` sh
