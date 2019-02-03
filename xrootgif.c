@@ -17,20 +17,18 @@
 "XRootGIF 1.0\n" \
 "A simple program to display GIFs as X root, targeting performance\n" \
 "\n" \
-"Usage: i:d:S:s:apt:Th\n" \
-"  -i | --image\n" \
-"       specify the image\n"\
-"  -d | --display\n" \
+"Usage: d:S:s:apt:Th [image]\n" \
+"  -d | --display [display]\n" \
 "       X-Display to use (:0), if none, use default display\n"\
-"  -S | --screen\n" \
-"       X-Screen to use, if none, use the default screen\n"\
-"  -s | --speed\n" \
+"  -S | --screen [num]\n" \
+"       X-Screen to use, if none, use default screen\n"\
+"  -s | --speed [float]\n" \
 "       Playback speed as float\n"\
 "  -a | --anti-alias-off\n" \
 "       Don't use anti aliasing (Only use with native resolution GIFs)\n"\
 "  -p | --performance\n" \
 "       Performance mode - scale framerate to 5 (default)\n"\
-"  -t | --targer-fps\n" \
+"  -t | --targer-fps [float]\n" \
 "       In performance mode, set target framerate\n"\
 "  -T | --test-pattern\n" \
 "       A little test pattern used for developing\n"\
@@ -394,9 +392,8 @@ int parse_args(int argc, char **argv)
         double tmp;
         char c;
         int longind = 0;
-        const char *optstring = "i:d:S:s:apt:Th";
+        const char *optstring = "d:S:s:apt:Th";
         struct option longopts[] = {
-                {"image", required_argument, NULL, 'i'},
                 {"display", required_argument, NULL, 'd'},
                 {"screen", required_argument, NULL, 'S'},
                 {"speed", required_argument, NULL, 's'},
@@ -417,9 +414,6 @@ int parse_args(int argc, char **argv)
 
         while( (c = getopt_long(argc, argv, optstring, longopts, &longind)) != -1) {
                 switch(c) {
-                case 'i':
-                        opts.image = optarg;
-                        break;
                 case 'd':
                         opts.display = optarg;
                         break;
@@ -450,6 +444,9 @@ int parse_args(int argc, char **argv)
                         exit(0);
                 }
         }
+
+        if(optind < argc)
+                opts.image = argv[optind];
 
         return 0;
 }
