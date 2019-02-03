@@ -12,6 +12,39 @@
 
 #define VERSION 1
 #define EXIT_ON_ERROR 1
+
+#define HELP_TEXT "" \
+"XRootGIF 1.0\n" \
+"A simple program to display GIFs as X root, targeting performance\n" \
+"\n" \
+"Usage: i:d:S:s:apt:Th\n" \
+"  -i | --image\n" \
+"       specify the image\n"\
+"  -d | --display\n" \
+"       X-Display to use (:0), if none, use default display\n"\
+"  -S | --screen\n" \
+"       X-Screen to use, if none, use the default screen\n"\
+"  -s | --speed\n" \
+"       Playback speed as float\n"\
+"  -a | --anti-alias-off\n" \
+"       Don't use anti aliasing (Only use with native resolution GIFs)\n"\
+"  -p | --performance\n" \
+"       Performance mode - scale framerate to 5 (default)\n"\
+"  -t | --targer-fps\n" \
+"       In performance mode, set target framerate\n"\
+"  -T | --test-pattern\n" \
+"       A little test pattern used for developing\n"\
+"  -h | --help\n" \
+"\n"\
+"Performance:\n"\
+"  This Program grew out of the pain, that most GIF-Viewer consume quiet\n"\
+"  some CPU time, so having a GIF as wallpaper somewhat drained the battery.\n"\
+"  XRootGIF tries to minimize CPU time used to display fancy GIFs,\n"\
+"  by pre rendering all frames and allocating them in the X-Display instance.\n"\
+"  Some GIFs may still make your PC heat your room, but this can be\n"\
+"  avoided by using the performance mode, which will simply downscale\n"\
+"  the framerate.\n"\
+
 #define GRGBTOD32(grgb)(0 | grgb.Red << 16 | grgb.Green << 8 | grgb.Blue)
 
 static int               screen_number;
@@ -361,7 +394,7 @@ int parse_args(int argc, char **argv)
         double tmp;
         char c;
         int longind = 0;
-        const char *optstring = "i:d:S:s:apt:T";
+        const char *optstring = "i:d:S:s:apt:Th";
         struct option longopts[] = {
                 {"image", required_argument, NULL, 'i'},
                 {"display", required_argument, NULL, 'd'},
@@ -371,6 +404,7 @@ int parse_args(int argc, char **argv)
                 {"performance", no_argument, NULL, 'p'},
                 {"target-fps", required_argument, NULL, 't'},
                 {"test-pattern", no_argument, NULL, 'T'},
+                {"help", no_argument, NULL, 'h'},
                 {NULL, no_argument, NULL, 0}
         };
 
@@ -411,6 +445,9 @@ int parse_args(int argc, char **argv)
                 case 'T':
                         opts.do_test = true;
                         break;
+                case 'h':
+                        puts(HELP_TEXT);
+                        exit(0);
                 }
         }
 

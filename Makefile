@@ -1,30 +1,30 @@
 ##
-# XRootImg
+# Xrootgif
 #
 # @file
 # @version 0.1
 CC= gcc
-CFLAGS = -Wall -lX11 -lgif -lImlib2dbg -L.
+CFLAGS = -Wall -lX11 -lgif -lImlib2
 ALLCFLAGS = $(CFLAGS) $(shell echo | gcc -xc -E -v - 2>&1 | grep -E '^\s' | sed '1d;s/^\s/ -I/' | tr '\n' ' ') # Explictly include system libraries for cdb
-OBJ= xrootimg.o
+OBJ= xrootgif.o
 
-xrootimg: $(OBJ)
-	$(CC) $(ALLCFLAGS) $(OBJ) -o xrootimg
+xrootgif: $(OBJ)
+	$(CC) $(ALLCFLAGS) $(OBJ) -o xrootgif
 
-run: xrootimg
-	./xrootimg $(ARGS)
+run: xrootgif
+	./xrootgif $(ARGS)
 
-debug: clean debug_flag xrootimg
+debug: clean debug_flag xrootgif
 
 debug_flag:
 	$(eval ALLCFLAGS += -g)
 
 clean:
-	rm -f $(OBJ) xrootimg
+	rm -f $(OBJ) xrootgif
 
 %.o: %.c
 	$(CC) $(ALLCFLAGS) -c $< -o $@
 
-.PHONY: xrootimg run clean
+.PHONY: xrootgif run clean
 
 # end
