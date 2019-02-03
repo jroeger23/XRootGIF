@@ -197,9 +197,8 @@ int load_pixmap_sample()
         return 0;
 }
 
-static void render_image(GifFileType *gif, GraphicsControlBlock *gcb, SavedImage *img, DATA32 *canvas)
+static void render_image(GifFileType *gif, GraphicsControlBlock *gcb, SavedImage *img, DATA32 *canvas, int *color_total)
 {
-        static int   total = 0;
         int          num;
         int          off, roff;
         GifByteType  *raster;
@@ -213,12 +212,12 @@ static void render_image(GifFileType *gif, GraphicsControlBlock *gcb, SavedImage
         desc = &img->ImageDesc;
 
         if(desc->ColorMap)
-                total += (num = desc->ColorMap->ColorCount);
+                *color_total += (num = desc->ColorMap->ColorCount);
         else
                 num = gif->SColorMap->ColorCount;
-        if(!total) total = num;
+        if(!*color_total) *color_total = num;
 
-        printf("\tCurrent Colors: %d, Total: %d\n", num, total);
+        printf("\tCurrent Colors: %d, Color_Total: %d\n", num, *color_total);
         printf("\tDispose: ");
 
         switch(gcb->DisposalMode) {
@@ -263,6 +262,7 @@ static void render_image(GifFileType *gif, GraphicsControlBlock *gcb, SavedImage
 int load_pixmaps_from_image()
 {
         int                  ret;
+        int                  color_total = 0;
         double               avg_delay = 0;
         const char           *err;
         GifFileType          *gif = NULL;
@@ -294,7 +294,7 @@ int load_pixmaps_from_image()
 
                 /* Render image on canvas */
                 DGifSavedExtensionToGCB(gif, i, &gcb);
-                render_image(gif, &gcb, &gif->SavedImages[i], canvas);
+                render_image(gif, &gcb, &gif->SavedImages[i], canvas, &color_total);
 
 
                 pmap = XCreatePixmap(display, root, root_attr.width,
@@ -338,8 +338,8 @@ int load_pixmaps_from_image()
                 }
         }
 
-        printf("Loaded GIF! - Frames: %d; Width: %d; Height: %d; FPS: %f (Scaled: %f)\n",
-               gif->ImageCount, gif->SWidth, gif->SHeight,
+        printf("Loaded GIF! - %d Frames; %dx%d; %d Colors; FPS: %f (Scaled: %f)\n",
+               gif->ImageCount, gif->SWidth, gif->SHeight, color_total,
                avg_delay, avg_delay/opts.speed);
 
         do_anim = true;
