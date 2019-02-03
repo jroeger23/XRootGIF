@@ -1,7 +1,6 @@
 ##
-# Xrootgif
+# XRootGif
 #
-# @file
 # @version 0.1
 CC= gcc
 CFLAGS = -Wall -lX11 -lgif -lImlib2
@@ -25,6 +24,6 @@ clean:
 %.o: %.c
 	$(CC) $(ALLCFLAGS) -c $< -o $@
 
-.PHONY: xrootgif run clean
+.PHONY: xrootgif run clean debug debug_flag
 
 # end
