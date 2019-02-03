@@ -25,7 +25,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <X11/Intrinsic.h>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <Imlib2.h>
