@@ -28,7 +28,7 @@
 "       Don't use anti aliasing (Only use with native resolution GIFs)\n"\
 "  -p | --performance\n" \
 "       Performance mode - scale framerate to 5 (default)\n"\
-"  -t | --targer-fps [float]\n" \
+"  -t | --target-fps [float]\n" \
 "       In performance mode, set target framerate\n"\
 "  -T | --test-pattern\n" \
 "       A little test pattern used for developing\n"\
