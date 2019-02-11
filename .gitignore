@@ -1,5 +1,6 @@
 compile_commands.json
 *.gif
 *.o
+*.tar.gz
 xrootgif
 todo.org
