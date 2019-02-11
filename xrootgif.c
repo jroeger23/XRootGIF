@@ -287,6 +287,7 @@ int load_pixmaps_from_image()
         int                  ret;
         int                  color_total = 0;
         double               avg_delay = 0;
+        int                  delay;
         const char           *err;
         GifFileType          *gif = NULL;
         DATA32               *canvas = NULL;
@@ -315,12 +316,7 @@ int load_pixmaps_from_image()
                 DGifSavedExtensionToGCB(gif, i, &gcb);
                 render_image(gif, &gcb, &gif->SavedImages[i], canvas, &color_total);
 
-                printf("Image %d -- Top: %d; Left, %d; Width: %d; Height: %d; Delay: %d; Interlace: %s\n", i,
-                       desc.Top, desc.Left, desc.Width, desc.Height, gcb.DelayTime,
-                       desc.Interlace ? "True" : "False");
-
                 //TODO: detect invald gif values, eg gcb delay
-
                 pmap = XCreatePixmap(display, root, root_attr.width,
                                      root_attr.height, root_attr.depth);
                 XSync(display, false);
@@ -347,9 +343,15 @@ int load_pixmaps_from_image()
                 imlib_context_set_image(img);
                 imlib_free_image();
 
+                delay = (gcb.DelayTime) ? gcb.DelayTime : 1; // Min delay time
                 Background_anim.frames[i].p = pmap;
-                Background_anim.frames[(i-1)%gif->ImageCount].dur = opts.speed*(10000*gcb.DelayTime);
-                avg_delay += gcb.DelayTime;
+                Background_anim.frames[((i==0) ? gif->ImageCount : i)-1].dur
+                        = opts.speed*(10000*delay);
+                avg_delay += delay;
+
+                printf("Image %d -- Top: %d; Left, %d; Width: %d; Height: %d; Delay: %d; Interlace: %s\n", i,
+                       desc.Top, desc.Left, desc.Width, desc.Height, gcb.DelayTime,
+                       desc.Interlace ? "True" : "False");
         }
 
         avg_delay = 100.0/(avg_delay/gif->ImageCount);
