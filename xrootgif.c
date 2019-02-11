@@ -316,8 +316,8 @@ int load_pixmaps_from_image()
                 render_image(gif, &gcb, &gif->SavedImages[i], canvas, &color_total);
 
                 printf("Image %d -- Top: %d; Left, %d; Width: %d; Height: %d; Delay: %d; Interlace: %s\n", i,
-                       desc.Top, desc.Left, desc.Width, gcb.DelayTime,
-                       desc.Height, desc.Interlace ? "True" : "False");
+                       desc.Top, desc.Left, desc.Width, desc.Height, gcb.DelayTime,
+                       desc.Interlace ? "True" : "False");
 
                 //TODO: detect invalid gif values, eg gcb delay
 
@@ -348,11 +348,12 @@ int load_pixmaps_from_image()
                 imlib_free_image();
 
                 Background_anim.frames[i].p = pmap;
+                // TODO: gcb.DelayTime is pre delay, not post delay
                 Background_anim.frames[i].dur = opts.speed*(10000*gcb.DelayTime);
-                avg_delay+= gcb.DelayTime;
+                avg_delay += gcb.DelayTime;
         }
 
-        avg_delay = 100/(avg_delay/gif->ImageCount);
+        avg_delay = 100.0/(avg_delay/gif->ImageCount);
 
         /* Scale to target performance */
         if(opts.performance && opts.target_fps < avg_delay) {
