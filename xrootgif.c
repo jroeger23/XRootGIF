@@ -311,14 +311,15 @@ int load_pixmaps_from_image()
         for(int i = 0; i < gif->ImageCount; ++i) {
                 desc = gif->SavedImages[i].ImageDesc;
 
-                printf("Image %u -- Top: %u; Left, %d; Width: %u; Height: %u; Interlace: %s\n", i,
-                       desc.Top, desc.Left, desc.Width,
-                       desc.Height, desc.Interlace ? "True" : "False");
-
                 /* Render image on canvas */
                 DGifSavedExtensionToGCB(gif, i, &gcb);
                 render_image(gif, &gcb, &gif->SavedImages[i], canvas, &color_total);
 
+                printf("Image %d -- Top: %d; Left, %d; Width: %d; Height: %d; Delay: %d; Interlace: %s\n", i,
+                       desc.Top, desc.Left, desc.Width, gcb.DelayTime,
+                       desc.Height, desc.Interlace ? "True" : "False");
+
+                //TODO: detect invalid gif values, eg gcb delay
 
                 pmap = XCreatePixmap(display, root, root_attr.width,
                                      root_attr.height, root_attr.depth);
@@ -354,7 +355,7 @@ int load_pixmaps_from_image()
         avg_delay = 100/(avg_delay/gif->ImageCount);
 
         /* Scale to target performance */
-        if(opts.performance) {
+        if(opts.performance && opts.target_fps < avg_delay) {
                 opts.speed = avg_delay / opts.target_fps;
                 for(int i = 0; i < Background_anim.num; ++i) {
                         Background_anim.frames[i].dur *= opts.speed;
