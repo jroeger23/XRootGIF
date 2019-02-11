@@ -319,7 +319,7 @@ int load_pixmaps_from_image()
                        desc.Top, desc.Left, desc.Width, desc.Height, gcb.DelayTime,
                        desc.Interlace ? "True" : "False");
 
-                //TODO: detect invalid gif values, eg gcb delay
+                //TODO: detect invald gif values, eg gcb delay
 
                 pmap = XCreatePixmap(display, root, root_attr.width,
                                      root_attr.height, root_attr.depth);
@@ -348,8 +348,7 @@ int load_pixmaps_from_image()
                 imlib_free_image();
 
                 Background_anim.frames[i].p = pmap;
-                // TODO: gcb.DelayTime is pre delay, not post delay
-                Background_anim.frames[i].dur = opts.speed*(10000*gcb.DelayTime);
+                Background_anim.frames[(i-1)%gif->ImageCount].dur = opts.speed*(10000*gcb.DelayTime);
                 avg_delay += gcb.DelayTime;
         }
 
