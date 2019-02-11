@@ -3,7 +3,7 @@
 #
 # @version 0.1
 CC= gcc
-CFLAGS = -Wall -lX11 -lgif -lImlib2
+CFLAGS = -Wall -lX11 -lgif -lImlib2 -zrelro -znow
 ALLCFLAGS = $(CFLAGS) $(shell echo | gcc -xc -E -v - 2>&1 | grep -E '^\s' | sed '1d;s/^\s/ -I/' | tr '\n' ' ') # Explictly include system libraries for cdb
 OBJ= xrootgif.o
 
