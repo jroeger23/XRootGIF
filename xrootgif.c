@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <Imlib2.h>
@@ -220,7 +221,52 @@ int load_pixmap_sample()
         return 0;
 }
 
-static void render_image(GifFileType *gif, GraphicsControlBlock *gcb, SavedImage *img, DATA32 *canvas, int *color_total)
+static void dispose_image(GifFileType *gif, GraphicsControlBlock *gcb,
+                          SavedImage *img, DATA32 *canvas, DATA32 *old_canvas)
+{
+        int          off;
+        GifImageDesc *desc;
+        DATA32       c;
+        GifColorType color;
+
+        desc = &img->ImageDesc;
+
+        /* Select background color */
+        if(gif->SColorMap && gif->SColorMap->ColorCount > gif->SBackGroundColor) {
+                color = gif->SColorMap->Colors[gif->SBackGroundColor];
+        }else {
+                color = (GifColorType){0, 0, 0};
+        }
+
+        printf("\tDispose: ");
+
+        switch(gcb->DisposalMode) {
+        case DISPOSE_BACKGROUND:
+                puts("BACKGROUND");
+                c = GRGBTOD32(color);
+                for(int y = 0; y < desc->Height; ++y) {
+                        off = desc->Top*gif->SWidth + y*gif->SWidth + desc->Left;
+                        for(int x = 0; x < desc->Width; ++x) {
+                                canvas[off + x] = c;
+                        }
+                }
+                break;
+        case DISPOSE_PREVIOUS:
+                puts("PREVIOUS");
+                for(int y = 0; y < desc->Height; ++y) {
+                        off = desc->Top*gif->SWidth + y*gif->SWidth + desc->Left;
+                        for(int x = 0; x < desc->Width; ++x) {
+                                canvas[off + x] = old_canvas[off + x];
+                        }
+                }
+                break;
+        case DISPOSAL_UNSPECIFIED: printf("UNSPECIFIED, falling back to ");
+        case DISPOSE_DO_NOT: puts("NONE");
+        }
+}
+
+static void render_image(GifFileType *gif, GraphicsControlBlock *gcb, SavedImage *img,
+                         DATA32 *canvas, int *color_total)
 {
         int          num;
         int          off, roff;
@@ -241,7 +287,6 @@ static void render_image(GifFileType *gif, GraphicsControlBlock *gcb, SavedImage
         if(!*color_total) *color_total = num;
 
         printf("\tCurrent Colors: %d, Color_Total: %d\n", num, *color_total);
-        printf("\tDispose: ");
 
         /* Select background color */
         if(gif->SColorMap && gif->SColorMap->ColorCount > gif->SBackGroundColor) {
@@ -250,42 +295,22 @@ static void render_image(GifFileType *gif, GraphicsControlBlock *gcb, SavedImage
                 color = (GifColorType){0, 0, 0};
         }
 
-        switch(gcb->DisposalMode) {
-        case DISPOSE_PREVIOUS:
-                puts("PREVIOUS (not implemented yet)");
-                break;
-        case DISPOSE_BACKGROUND:
-                puts("BACKGROUND");
-                c = GRGBTOD32(color);
-                for(int y = 0; y < desc->Height; ++y) {
-                        off = desc->Top*gif->SWidth + y*gif->SWidth + desc->Left;
-                        for(int x = 0; x < desc->Width; ++x) {
+        for(int y = 0; y < desc->Height; ++y) {
+                off = desc->Top*gif->SWidth + y*gif->SWidth + desc->Left;
+                for(int x = 0; x < desc->Width; ++x) {
+                        roff = y*desc->Width;
+                        color_code = raster[roff + x];
+                        if(desc->ColorMap && desc->ColorMap->ColorCount > color_code)
+                                color = desc->ColorMap->Colors[color_code];
+                        else if(gif->SColorMap && gif->SColorMap->ColorCount > color_code)
+                                color = gif->SColorMap->Colors[color_code];
+                        else /* this should not happen */
+                                color = (GifColorType){0, 0, 0};
+                        c = GRGBTOD32(color);
+                        if(gcb->TransparentColor == -1
+                           || gcb->TransparentColor != color_code)
                                 canvas[off + x] = c;
-                        }
                 }
-                break;
-        case DISPOSAL_UNSPECIFIED: /* Don't dispose */
-                printf("UNSPECIFIED, falling back to ");
-        case DISPOSE_DO_NOT:
-                puts("NONE");
-                for(int y = 0; y < desc->Height; ++y) {
-                        off = desc->Top*gif->SWidth + y*gif->SWidth + desc->Left;
-                        for(int x = 0; x < desc->Width; ++x) {
-                                roff = y*desc->Width;
-                                color_code = raster[roff + x];
-                                if(desc->ColorMap && desc->ColorMap->ColorCount > color_code)
-                                        color = desc->ColorMap->Colors[color_code];
-                                else if(gif->SColorMap && gif->SColorMap->ColorCount > color_code)
-                                        color = gif->SColorMap->Colors[color_code];
-                                else
-                                        color = (GifColorType){0, 0, 0};
-                                c = GRGBTOD32(color);
-                                if(gcb->TransparentColor == -1
-                                   || gcb->TransparentColor != color_code)
-                                        canvas[off + x] = c;
-                        }
-                }
-                break;
         }
 }
 
@@ -297,7 +322,9 @@ int load_pixmaps_from_image()
         int                  delay;
         const char           *err;
         GifFileType          *gif = NULL;
+        size_t               canvas_size;
         DATA32               *canvas = NULL;
+        DATA32               *old_canvas = NULL;
         Imlib_Image          img, img_scaled;
         Pixmap               pmap;
         GraphicsControlBlock gcb;
@@ -313,20 +340,21 @@ int load_pixmaps_from_image()
         Background_anim.frames = malloc(sizeof(struct Background_frame)
                                         * gif->ImageCount);
 
-        canvas = malloc(sizeof(DATA32) * gif->SWidth * gif->SHeight);
+        canvas_size = sizeof(DATA32) * gif->SWidth * gif->SHeight;
+        canvas      = malloc(canvas_size);
+        old_canvas  = malloc(canvas_size);
 
         /* Render each image */
         for(int i = 0; i < gif->ImageCount; ++i) {
                 desc = gif->SavedImages[i].ImageDesc;
-
-                /* Render image on canvas */
                 DGifSavedExtensionToGCB(gif, i, &gcb);
-                render_image(gif, &gcb, &gif->SavedImages[i], canvas, &color_total);
-
-                //TODO: detect invald gif values, eg gcb delay
                 pmap = XCreatePixmap(display, root, root_attr.width,
                                      root_attr.height, root_attr.depth);
                 XSync(display, false);
+
+                /* Render image on canvas */
+                render_image(gif, &gcb, &gif->SavedImages[i], canvas, &color_total);
+
 
                 /* Render canvas on pixmap with imlib2 */
                 img = imlib_create_image_using_data(gif->SWidth,
@@ -349,6 +377,10 @@ int load_pixmaps_from_image()
                 imlib_free_image();
                 imlib_context_set_image(img);
                 imlib_free_image();
+
+                /* Dispose image */
+                dispose_image(gif, &gcb, &gif->SavedImages[i], canvas, old_canvas);
+                memcpy(old_canvas, canvas, canvas_size);
 
                 delay = (gcb.DelayTime) ? gcb.DelayTime : 1; // Min delay time
                 Background_anim.frames[i].p = pmap;
