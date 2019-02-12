@@ -243,13 +243,19 @@ static void render_image(GifFileType *gif, GraphicsControlBlock *gcb, SavedImage
         printf("\tCurrent Colors: %d, Color_Total: %d\n", num, *color_total);
         printf("\tDispose: ");
 
+        /* Select background color */
+        if(gif->SColorMap && gif->SColorMap->ColorCount > gif->SBackGroundColor) {
+                color = gif->SColorMap->Colors[gif->SBackGroundColor];
+        }else {
+                color = (GifColorType){0, 0, 0};
+        }
+
         switch(gcb->DisposalMode) {
         case DISPOSE_PREVIOUS:
                 puts("PREVIOUS (not implemented yet)");
                 break;
         case DISPOSE_BACKGROUND:
                 puts("BACKGROUND");
-                color = gif->SColorMap->Colors[gif->SBackGroundColor];
                 c = GRGBTOD32(color);
                 for(int y = 0; y < desc->Height; ++y) {
                         off = desc->Top*gif->SWidth + y*gif->SWidth + desc->Left;
@@ -262,16 +268,17 @@ static void render_image(GifFileType *gif, GraphicsControlBlock *gcb, SavedImage
                 printf("UNSPECIFIED, falling back to ");
         case DISPOSE_DO_NOT:
                 puts("NONE");
-                color = gif->SColorMap->Colors[gif->SBackGroundColor];
                 for(int y = 0; y < desc->Height; ++y) {
                         off = desc->Top*gif->SWidth + y*gif->SWidth + desc->Left;
                         for(int x = 0; x < desc->Width; ++x) {
                                 roff = y*desc->Width;
                                 color_code = raster[roff + x];
-                                if(desc->ColorMap)
+                                if(desc->ColorMap && desc->ColorMap->ColorCount > color_code)
                                         color = desc->ColorMap->Colors[color_code];
-                                else
+                                else if(gif->SColorMap && gif->SColorMap->ColorCount > color_code)
                                         color = gif->SColorMap->Colors[color_code];
+                                else
+                                        color = (GifColorType){0, 0, 0};
                                 c = GRGBTOD32(color);
                                 if(gcb->TransparentColor == -1
                                    || gcb->TransparentColor != color_code)
