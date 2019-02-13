@@ -1,4 +1,4 @@
-# XRootGIF
+# XRootGIF [![xrootgif](https://img.shields.io/aur/version/xrootgif.svg)](https://aur.archlinux.org/packages/xrootgif/)
 A simple program to display GIFs as X root, targeting performance
 
 # Usage:
