@@ -48,8 +48,8 @@
 "       X-Screen to use, if none, use default screen\n"\
 "  -s | --speed [float]\n" \
 "       Playback speed as float\n"\
-"  -a | --anti-alias-off\n" \
-"       Don't use anti aliasing (Only use with native resolution GIFs)\n"\
+"  -a | --anti-alias\n" \
+"       Use anti-aliasing\n"\
 "  -p | --performance\n" \
 "       Performance mode - scale framerate to 5 (default)\n"\
 "  -t | --target-fps [float]\n" \
@@ -352,7 +352,17 @@ int load_pixmaps_from_image()
                                      root_attr.height, root_attr.depth);
                 XSync(display, false);
 
-                /* Render image on canvas */
+                /* set current frame's fields */
+                delay = (gcb.DelayTime) ? gcb.DelayTime : 1; // Min delay time
+                Background_anim.frames[i].p = pmap;
+                Background_anim.frames[((i==0) ? gif->ImageCount : i)-1].dur
+                        = opts.speed*(10000*delay);
+                avg_delay += delay;
+
+                printf("Image %d -- Top: %d; Left, %d; Width: %d; Height: %d; Delay: %d; Interlace: %s\n", i,
+                       desc.Top, desc.Left, desc.Width, desc.Height, gcb.DelayTime,
+                       desc.Interlace ? "True" : "False");
+
                 render_image(gif, &gcb, &gif->SavedImages[i], canvas, &color_total);
 
 
@@ -361,6 +371,7 @@ int load_pixmaps_from_image()
                                                     gif->SHeight,
                                                     canvas);
                 imlib_context_set_image(img);
+                imlib_context_set_anti_alias(opts.anti_alias);
                 img_scaled = imlib_create_cropped_scaled_image(
                         0, 0, gif->SWidth, gif->SHeight, root_attr.width,
                         root_attr.height);
@@ -381,16 +392,6 @@ int load_pixmaps_from_image()
                 /* Dispose image */
                 dispose_image(gif, &gcb, &gif->SavedImages[i], canvas, old_canvas);
                 memcpy(old_canvas, canvas, canvas_size);
-
-                delay = (gcb.DelayTime) ? gcb.DelayTime : 1; // Min delay time
-                Background_anim.frames[i].p = pmap;
-                Background_anim.frames[((i==0) ? gif->ImageCount : i)-1].dur
-                        = opts.speed*(10000*delay);
-                avg_delay += delay;
-
-                printf("Image %d -- Top: %d; Left, %d; Width: %d; Height: %d; Delay: %d; Interlace: %s\n", i,
-                       desc.Top, desc.Left, desc.Width, desc.Height, gcb.DelayTime,
-                       desc.Interlace ? "True" : "False");
         }
 
         avg_delay = 100.0/(avg_delay/gif->ImageCount);
@@ -462,7 +463,7 @@ int parse_args(int argc, char **argv)
                 {"display", required_argument, NULL, 'd'},
                 {"screen", required_argument, NULL, 'S'},
                 {"speed", required_argument, NULL, 's'},
-                {"anti-alias-off", no_argument, NULL, 'a'},
+                {"anti-alias", no_argument, NULL, 'a'},
                 {"performance", no_argument, NULL, 'p'},
                 {"target-fps", required_argument, NULL, 't'},
                 {"test-pattern", no_argument, NULL, 'T'},
@@ -472,7 +473,7 @@ int parse_args(int argc, char **argv)
 
         /* Defaults */
         opts.speed = 1.0;
-        opts.anti_alias = 1;
+        opts.anti_alias = 0;
         opts.target_fps = 5.0;
         opts.performance = false;
         opts.do_test = false;
@@ -491,7 +492,7 @@ int parse_args(int argc, char **argv)
                                 opts.speed = 1.0/tmp;
                         break;
                 case 'a':
-                        opts.anti_alias = 0;
+                        opts.anti_alias = 1;
                         break;
                 case 'p':
                         opts.performance = true;

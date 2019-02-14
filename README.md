@@ -10,8 +10,8 @@ Usage: ./xrootgif d:S:s:apt:Th [image]
        X-Screen to use, if none, use default screen
   -s | --speed [float]
        Playback speed as float
-  -a | --anti-alias-off
-       Don't use anti aliasing (Only use with native resolution GIFs)
+  -a | --anti-alias
+       Use anti-aliasing
   -p | --performance
        Performance mode - scale framerate to 5 (default)
   -t | --target-fps [float]
