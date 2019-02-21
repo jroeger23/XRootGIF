@@ -1,7 +1,7 @@
 # XRootGIF [![xrootgif](https://img.shields.io/aur/version/xrootgif.svg)](https://aur.archlinux.org/packages/xrootgif/)
 A simple program to display GIFs as X root, targeting performance
 
-# Usage:
+# Usage
 ``` text
 Usage: ./xrootgif d:S:s:apt:Th [image]
   -d | --display [display]
@@ -22,7 +22,7 @@ Usage: ./xrootgif d:S:s:apt:Th [image]
 
 ```
 
-# Performance:
+# Performance
 This Program grew out of the pain, that most GIF-Viewer consume quiet
 some CPU time, so having a GIF as wallpaper somewhat drained the battery.
 XRootGIF tries to minimize CPU time used to display fancy GIFs,
@@ -31,12 +31,25 @@ Some GIFs may still make your PC heat your room, but this can be
 avoided by using the performance mode, which will simply downscale
 the framerate.
 
+# Planned features
+
+- multi screen
+- more image fitting modes
+- configuration files
+- daemon mode
+- other animation formats (webm, apng, ...)
+
 # Building
 The following libraries are used by XRootGIF:
 
 - libx11
 - giflib
 - imlib2
+
+Tools:
+
+- gcc
+- make
 
 To compile, simply run
 
