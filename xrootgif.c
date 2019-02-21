@@ -23,6 +23,7 @@
  * OR OTHER DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
 #include "globals.h"
+#include "output.h"
 #include "sample.h"
 #include "gif.h"
 
@@ -75,7 +76,7 @@ int unload_pixmaps();
 
 void interrupt_handler(int i)
 {
-        puts("Interrupt signal catched!");
+        sprint("Interrupt signal catched!", verbose);
         do_anim = false;
 }
 
@@ -84,7 +85,7 @@ int error_handler(Display *d, XErrorEvent *e)
         char error_str[1024];
         XGetErrorText(d, e->error_code, error_str, sizeof(error_str));
         error_str[sizeof(error_str)-1] = 0;
-        printf("Error: %s\n", error_str);
+        eformat(normal, "Error: %s\n", error_str);
         if(EXIT_ON_ERROR) {
                 unload_pixmaps();
                 exit(e->error_code);
@@ -100,7 +101,7 @@ int prepare()
 
         display = XOpenDisplay(opts.display);
         if(!display) {
-                fputs("Could not open Display...\n", stderr);
+                eprintln("Could not open Display...", normal);
                 ret = 1;
                 goto exit;
         }
@@ -115,7 +116,7 @@ int prepare()
         prop_root_pmap = XInternAtom(display, "_XROOTPMAP_ID", false);
 
         if(!XGetWindowAttributes(display, root, &root_attr)) {
-                fputs("Could not get Window attributes...\n", stderr);
+                eprintln("Could not get Window attributes...", normal);
                 ret = 2;
                 goto exit;
         }
@@ -130,7 +131,7 @@ exit:
 
 int unload_pixmaps()
 {
-        puts("Cleanung up...");
+        sprintln("Cleanung up...", verbose);
         for(int i = 0; i < Background_anim.num; ++i) {
                 XFreePixmap(display, Background_anim.frames[i].p);
         }
@@ -215,7 +216,7 @@ int parse_args(int argc, char **argv)
                         opts.do_test = true;
                         break;
                 case 'h':
-                        puts(HELP_TEXT);
+                        sprintln(HELP_TEXT, normal);
                         exit(0);
                 }
         }

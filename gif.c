@@ -1,4 +1,5 @@
 #include "gif.h"
+#include "output.h"
 #include "globals.h"
 
 #include <stdio.h>
@@ -28,11 +29,11 @@ static void dispose_image(GifFileType *gif, GraphicsControlBlock *gcb,
                 color = (GifColorType){0, 0, 0};
         }
 
-        printf("\tDispose: ");
+        sprint("\tDispose: ", verbose);
 
         switch(gcb->DisposalMode) {
         case DISPOSE_BACKGROUND:
-                puts("BACKGROUND");
+                sprintln("BACKGROUND", verbose);
                 c = GRGBTOD32(color);
                 for(int y = 0; y < desc->Height; ++y) {
                         off = desc->Top*gif->SWidth + y*gif->SWidth + desc->Left;
@@ -42,7 +43,7 @@ static void dispose_image(GifFileType *gif, GraphicsControlBlock *gcb,
                 }
                 break;
         case DISPOSE_PREVIOUS:
-                puts("PREVIOUS");
+                sprintln("BACKGROUND", verbose);
                 for(int y = 0; y < desc->Height; ++y) {
                         off = desc->Top*gif->SWidth + y*gif->SWidth + desc->Left;
                         for(int x = 0; x < desc->Width; ++x) {
@@ -50,8 +51,8 @@ static void dispose_image(GifFileType *gif, GraphicsControlBlock *gcb,
                         }
                 }
                 break;
-        case DISPOSAL_UNSPECIFIED: printf("UNSPECIFIED, falling back to ");
-        case DISPOSE_DO_NOT: puts("NONE");
+        case DISPOSAL_UNSPECIFIED: sprint("UNSPECIFIED, falling back to ", verbose);
+        case DISPOSE_DO_NOT: sprintln("NONE", verbose);
         }
 }
 
@@ -76,7 +77,7 @@ static void render_image(GifFileType *gif, GraphicsControlBlock *gcb, SavedImage
                 num = gif->SColorMap->ColorCount;
         if(!*color_total) *color_total = num;
 
-        printf("\tCurrent Colors: %d, Color_Total: %d\n", num, *color_total);
+        sformat(verbose, "\tCurrent Colors: %d, Color_Total: %d\n", num, *color_total);
 
         /* Select background color */
         if(gif->SColorMap && gif->SColorMap->ColorCount > gif->SBackGroundColor) {
@@ -134,6 +135,8 @@ int load_pixmaps_from_image()
         canvas      = malloc(canvas_size);
         old_canvas  = malloc(canvas_size);
 
+        sprintln("Loading GIF...", normal);
+
         /* Render each image */
         for(int i = 0; i < gif->ImageCount; ++i) {
                 desc = gif->SavedImages[i].ImageDesc;
@@ -149,9 +152,9 @@ int load_pixmaps_from_image()
                         = opts.speed*(10000*delay);
                 avg_delay += delay;
 
-                printf("Image %d -- Top: %d; Left, %d; Width: %d; Height: %d; Delay: %d; Interlace: %s\n", i,
-                       desc.Top, desc.Left, desc.Width, desc.Height, gcb.DelayTime,
-                       desc.Interlace ? "True" : "False");
+                sformat(verbose, "Image %d -- Top: %d; Left, %d; Width: %d; Height: %d; Delay: %d; Interlace: %s\n", i,
+                        desc.Top, desc.Left, desc.Width, desc.Height, gcb.DelayTime,
+                        desc.Interlace ? "True" : "False");
 
                 render_image(gif, &gcb, &gif->SavedImages[i], canvas, &color_total);
 
@@ -194,15 +197,15 @@ int load_pixmaps_from_image()
                 }
         }
 
-        printf("Loaded GIF! - %d Frames; %dx%d; %d Colors; FPS: %f (Scaled: %f)\n",
-               gif->ImageCount, gif->SWidth, gif->SHeight, color_total,
-               avg_delay, avg_delay/opts.speed);
+        sformat(normal, "Loaded GIF! - %d Frames; %dx%d; %d Colors; FPS: %f (Scaled: %f)\n",
+                gif->ImageCount, gif->SWidth, gif->SHeight, color_total,
+                avg_delay, avg_delay/opts.speed);
 
         do_anim = true;
         goto exit;
 error:
         err = GifErrorString(ret);
-        fprintf(stderr, "GIFLIB: %s\n", err);
+        eformat(normal, "GIFLIB: %s\n", err);
 exit:
         if(canvas) free(canvas);
         if(gif) DGifCloseFile(gif,&ret);
