@@ -2,10 +2,11 @@
 #define __OUTPUT_H_
 
 typedef enum {
-        normal,     /* Normal output */
-        warn,       /* Show warnings */
-        verbose,    /* Maximum information */
-        debug       /* Debug information */
+        none    = -1,
+        normal  = 0,    /* Normal output */
+        warn    = 1,    /* Show warnings */
+        verbose = 2,    /* Maximum information */
+        debug   = 3     /* Debug information */
 } output_level_t;
 
 typedef struct {

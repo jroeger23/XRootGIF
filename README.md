@@ -3,7 +3,7 @@ A simple program to display GIFs as X root, targeting performance
 
 # Usage
 ``` text
-Usage: ./xrootgif d:S:s:apt:Th [image]
+Usage: ./xrootgif d:S:s:apt:TqQh [image]
   -d | --display [display]
        X-Display to use (:0), if none, use default display
   -S | --screen [num]
@@ -17,9 +17,12 @@ Usage: ./xrootgif d:S:s:apt:Th [image]
   -t | --target-fps [float]
        In performance mode, set target framerate
   -T | --test-pattern
-       A little test pattern used for developing
+      A little test pattern used for developing
+  -q | --quiet
+       Only print basic information
+  -Q | --Quiet
+       No output
   -h | --help
-
 ```
 
 # Performance

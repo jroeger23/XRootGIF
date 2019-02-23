@@ -46,7 +46,7 @@
 "XRootGIF 1.0\n" \
 "A simple program to display GIFs as X root, targeting performance\n" \
 "\n" \
-"Usage: d:S:s:apt:Th [image]\n" \
+"Usage: d:S:s:apt:TqQh [image]\n" \
 "  -d | --display [display]\n" \
 "       X-Display to use (:0), if none, use default display\n"\
 "  -S | --screen [num]\n" \
@@ -61,6 +61,10 @@
 "       In performance mode, set target framerate\n"\
 "  -T | --test-pattern\n" \
 "       A little test pattern used for developing\n"\
+"  -q | --quiet\n" \
+"       Only print basic information\n"\
+"  -Q | --Quiet\n" \
+"       No output\n"\
 "  -h | --help\n" \
 "\n"\
 "Performance:\n"\
@@ -168,7 +172,7 @@ int parse_args(int argc, char **argv)
         double tmp;
         char c;
         int longind = 0;
-        const char *optstring = "d:S:s:apt:Th";
+        const char *optstring = "d:S:s:apt:TqQh";
         struct option longopts[] = {
                 {"display", required_argument, NULL, 'd'},
                 {"screen", required_argument, NULL, 'S'},
@@ -177,6 +181,8 @@ int parse_args(int argc, char **argv)
                 {"performance", no_argument, NULL, 'p'},
                 {"target-fps", required_argument, NULL, 't'},
                 {"test-pattern", no_argument, NULL, 'T'},
+                {"quiet", no_argument, NULL, 'q'},
+                {"Quiet", no_argument, NULL, 'Q'},
                 {"help", no_argument, NULL, 'h'},
                 {NULL, no_argument, NULL, 0}
         };
@@ -214,6 +220,12 @@ int parse_args(int argc, char **argv)
                         break;
                 case 'T':
                         opts.do_test = true;
+                        break;
+                case 'q':
+                        output.level = normal;
+                        break;
+                case 'Q':
+                        output.level = none;
                         break;
                 case 'h':
                         sprintln(HELP_TEXT, normal);
