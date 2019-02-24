@@ -7,13 +7,20 @@
 
 output_t output = { .level = verbose };
 
-#define PREFIX(FD, L) write(FD, prefixes[L], strlen(prefixes[L]));
+#define PREFIX(FD, L) write(FD, prefixes[L], prefixes_len[L]);
 
 static const char* prefixes[] = {
         "",     /* Normal */
         "[W] ",  /* Warn */
         "[V] ",  /* Verbose */
         "[D] "   /* Debug */
+};
+
+static const size_t prefixes_len[] = {
+        0,
+        4,
+        4,
+        4
 };
 
 void sprint(char *str, output_level_t l)
