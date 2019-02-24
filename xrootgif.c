@@ -225,7 +225,7 @@ int parse_args(int argc, char **argv)
                         output.level = normal;
                         break;
                 case 'Q':
-                        output.level = none;
+                        output.level = -1;
                         break;
                 case 'h':
                         sprintln(HELP_TEXT, normal);
