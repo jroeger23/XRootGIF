@@ -99,6 +99,7 @@ int error_handler(Display *d, XErrorEvent *e)
 int prepare()
 {
         int ret = 0;
+        char *screen_strings[64];
 
         XSetErrorHandler(&error_handler);
 
@@ -117,7 +118,27 @@ int prepare()
                 screens[0].screen_number = DefaultScreen(display);
                 num_screens = 1;
 
+        }else {
+                /* count and tokenize screens separated by ',' */
+                num_screens = 1;
+                screen_strings[0] = opts.screen;
+                for(char *c = opts.screen; *c; ++c) {
+                        if(*c==',') {
+                                *c = 0; // split the string
+                                screen_strings[num_screens] = c+1; // and save it
+                                num_screens += 1;
+                        }
+
+                }
+
+                screens = malloc(sizeof(struct Background_screen) * num_screens);
+
+                for(int i = 0; i < num_screens; ++i) {
+                        screens[i].screen_number = atoi(screen_strings[i]);
+                        // TODO: check for duplicate screens
+                }
         }
+
 
         for(int i = 0; i < num_screens; ++i) {
                 screens[i].root = RootWindow(display, screens[i].screen_number);
