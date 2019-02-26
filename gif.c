@@ -152,7 +152,7 @@ int load_pixmaps_from_image()
 
                 render_image(gif, &gcb, &gif->SavedImages[i], canvas, &color_total);
 
-                pmap_allocate_auto(&Background_anim.frames[i].p,
+                pmap_allocate_auto(&Background_anim.frames[i].sp,
                                    canvas, gif->SWidth, gif->SHeight);
 
                 /* Dispose image */

@@ -24,7 +24,6 @@
  ******************************************************************************/
 #include "globals.h"
 #include "output.h"
-#include "sample.h"
 #include "gif.h"
 
 #include <stdio.h>
@@ -76,7 +75,7 @@
 "  avoided by using the performance mode, which will simply downscale\n"\
 "  the framerate.\n"\
 
-int unload_pixmaps();
+int cleanup();
 
 void interrupt_handler(int i)
 {
@@ -91,7 +90,7 @@ int error_handler(Display *d, XErrorEvent *e)
         error_str[sizeof(error_str)-1] = 0;
         eformat(normal, "Error: %s\n", error_str);
         if(EXIT_ON_ERROR) {
-                unload_pixmaps();
+                cleanup();
                 exit(e->error_code);
         }
         return 0;
@@ -110,24 +109,29 @@ int prepare()
                 goto exit;
         }
 
-        if(opts.screen)
-                screen_number = atoi(opts.screen); // Safe, because invalid string retults in 0 => default screen
-        else
-                screen_number = DefaultScreen(display);
-
-        root = RootWindow(display, screen_number);
-
         prop_root_pmap = XInternAtom(display, "_XROOTPMAP_ID", false);
 
-        if(!XGetWindowAttributes(display, root, &root_attr)) {
-                eprintln("Could not get Window attributes...", normal);
-                ret = 2;
-                goto exit;
+        if(!opts.screen) {
+                /* Only use the default screen */
+                screens = malloc(sizeof(struct Background_screen));
+                screens[0].screen_number = DefaultScreen(display);
+                num_screens = 1;
+
         }
 
-        cmap = DefaultColormap(display, screen_number);
+        for(int i = 0; i < num_screens; ++i) {
+                screens[i].root = RootWindow(display, screens[i].screen_number);
 
-        visual = DefaultVisual(display, screen_number);
+                if(!XGetWindowAttributes(display, screens[i].root, &screens[i].root_attr)) {
+                        eprintln("Could not get Window attributes...", normal);
+                        ret = 2;
+                        goto exit;
+                }
+
+                screens[i].cmap = DefaultColormap(display, screens[i].screen_number);
+
+                screens[i].visual = DefaultVisual(display, screens[i].screen_number);
+        }
 
 exit:
         return ret;
@@ -135,9 +139,11 @@ exit:
 
 int unload_pixmaps()
 {
-        sprintln("Cleanung up...", verbose);
         for(int i = 0; i < Background_anim.num; ++i) {
-                XFreePixmap(display, Background_anim.frames[i].p);
+                for(int j = 0; j < num_screens; ++j) {
+                        XFreePixmap(display, Background_anim.frames[i].sp[j].p);
+                }
+                free(Background_anim.frames[i].sp);
         }
 
         free(Background_anim.frames);
@@ -145,21 +151,39 @@ int unload_pixmaps()
         return 0;
 }
 
+int cleanup()
+{
+        sprintln("Cleanung up...", verbose);
+
+        unload_pixmaps();
+        free(screens);
+
+        return 0;
+}
+
+
 void anim_loop()
 {
         struct Background_frame *f;
+        struct Background_screen_pmap *sp;
 
         Background_anim.cur = 0;
 
         while(do_anim) {
                 f = &Background_anim.frames[Background_anim.cur];
 
-                /* Used for pseudo-transparency */
-                XChangeProperty(display, root, prop_root_pmap, XA_PIXMAP, 32,
-                                PropModeReplace, (unsigned char *) &f->p, 1);
+                /* update each screen */
+                for(int i = 0; i < num_screens; ++i) {
+                        sp = &Background_anim.frames[Background_anim.cur].sp[i];
 
-                XSetWindowBackgroundPixmap(display, root, f->p);
-                XClearWindow(display, root);
+                        /* Used for pseudo-transparency */
+                        XChangeProperty(display, sp->s->root, prop_root_pmap, XA_PIXMAP, 32,
+                                        PropModeReplace, (unsigned char *) &sp->p, 1);
+
+                        XSetWindowBackgroundPixmap(display, sp->s->root, sp->p);
+                        XClearWindow(display, sp->s->root);
+                }
+
 		XFlush(display);
                 usleep(f->dur);
                 Background_anim.cur += 1;
@@ -248,14 +272,11 @@ int main(int argc, char **argv)
         if(prepare())
                return 1;
 
-        if(opts.do_test)
-                load_pixmap_sample();
-        else
-                load_pixmaps_from_image();
+        load_pixmaps_from_image();
 
         anim_loop();
 
-        unload_pixmaps();
+        cleanup();
 
         XCloseDisplay(display);
 
