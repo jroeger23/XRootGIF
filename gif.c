@@ -1,13 +1,13 @@
 #include "gif.h"
 #include "output.h"
 #include "globals.h"
+#include "pixmap_allocate.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
-#include <Imlib2.h>
 #include <gif_lib.h>
 
 #define GRGBTOD32(grgb)(0 | grgb.Red << 16 | grgb.Green << 8 | grgb.Blue)
@@ -116,8 +116,6 @@ int load_pixmaps_from_image()
         size_t               canvas_size;
         DATA32               *canvas = NULL;
         DATA32               *old_canvas = NULL;
-        Imlib_Image          img, img_scaled;
-        Pixmap               pmap;
         GraphicsControlBlock gcb;
         GifImageDesc         desc;
 
@@ -141,13 +139,9 @@ int load_pixmaps_from_image()
         for(int i = 0; i < gif->ImageCount; ++i) {
                 desc = gif->SavedImages[i].ImageDesc;
                 DGifSavedExtensionToGCB(gif, i, &gcb);
-                pmap = XCreatePixmap(display, root, root_attr.width,
-                                     root_attr.height, root_attr.depth);
-                XSync(display, false);
 
-                /* set current frame's fields */
+                /* set delay time */
                 delay = (gcb.DelayTime) ? gcb.DelayTime : 1; // Min delay time
-                Background_anim.frames[i].p = pmap;
                 Background_anim.frames[((i==0) ? gif->ImageCount : i)-1].dur
                         = opts.speed*(10000*delay);
                 avg_delay += delay;
@@ -158,29 +152,8 @@ int load_pixmaps_from_image()
 
                 render_image(gif, &gcb, &gif->SavedImages[i], canvas, &color_total);
 
-
-                /* Render canvas on pixmap with imlib2 */
-                img = imlib_create_image_using_data(gif->SWidth,
-                                                    gif->SHeight,
-                                                    canvas);
-                imlib_context_set_image(img);
-                imlib_context_set_anti_alias(opts.anti_alias);
-                img_scaled = imlib_create_cropped_scaled_image(
-                        0, 0, gif->SWidth, gif->SHeight, root_attr.width,
-                        root_attr.height);
-                imlib_context_set_image(img_scaled);
-                imlib_context_set_display(display);
-                imlib_context_set_visual(visual);
-                imlib_context_set_colormap(cmap);
-                imlib_context_set_drawable(pmap);
-                imlib_context_set_anti_alias(opts.anti_alias);
-                imlib_context_set_dither(1);
-                imlib_context_set_blend(1);
-                imlib_context_set_angle(0);
-                imlib_render_image_on_drawable(0, 0);
-                imlib_free_image();
-                imlib_context_set_image(img);
-                imlib_free_image();
+                pmap_allocate_auto(&Background_anim.frames[i].p,
+                                   canvas, gif->SWidth, gif->SHeight);
 
                 /* Dispose image */
                 dispose_image(gif, &gcb, &gif->SavedImages[i], canvas, old_canvas);
