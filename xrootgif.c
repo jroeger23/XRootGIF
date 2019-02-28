@@ -260,18 +260,19 @@ static int parse_args(int argc, char **argv)
                         exit(0);
                 case -127: /* scale-per-monitor */
                         opts.fitting = scale_per_monitor;
+
+                        /* only notify when wanted explicitly */
+#if !defined(HAVE_XRANDR) && !defined(HAVE_XINERAMA)
+                        sprintln("XRandR or Xinerama extension missing, cannot scale per monitor"
+                                 " falling back to scale across monitors...", warn);
+#endif
+
                         break;
                 case -126: /* scale-across-monitor */
                         opts.fitting = scale_across_monitor;
                         break;
                 }
         }
-
-#if !defined(HAVE_XRANDR) && !defined(HAVE_XINERAMA)
-        if(opts.fitting == scale_per_monitor)
-                sprintln("XRandR or Xinerama extension missing, cannot scale per monitor"
-                         " falling back to scale across monitors...", warn);
-#endif
 
         if(optind < argc)
                 opts.image = argv[optind];
