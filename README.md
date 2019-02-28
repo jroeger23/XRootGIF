@@ -40,7 +40,6 @@ the framerate.
 
 # Planned features
 
-- multi screen also for Xinerama
 - more image fitting modes
 - configuration files
 - daemon mode
@@ -52,6 +51,8 @@ The following libraries are used by XRootGIF:
 - libx11
 - giflib
 - imlib2
+- (libXinerama)
+- (libXrandr)
 
 Tools:
 
