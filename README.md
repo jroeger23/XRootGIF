@@ -62,6 +62,6 @@ Tools:
 To compile, simply run
 
 ``` sh
-make
+./configure && make
 ```
 
