@@ -68,6 +68,10 @@
 "       Only print basic information\n"\
 "  -Q | --Quiet\n" \
 "       No output\n"\
+"  --scale-per-monitor\n" \
+"       Scales the image on each monitor (default)\n"\
+"  --scale-across-monitor\n" \
+"       Scales the image across all monitors\n"\
 "  -h | --help\n" \
 "\n"\
 "Performance:\n"\

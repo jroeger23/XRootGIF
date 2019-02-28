@@ -22,6 +22,10 @@ Usage: ./xrootgif d:S:s:apt:TqQh [image]
        Only print basic information
   -Q | --Quiet
        No output
+  --scale-per-monitor
+       Scales the image on each monitor (default)
+  --scale-across-monitor
+       Scales the image across all monitors
   -h | --help
 ```
 
@@ -36,7 +40,7 @@ the framerate.
 
 # Planned features
 
-- multi screen
+- multi screen also for Xinerama
 - more image fitting modes
 - configuration files
 - daemon mode
