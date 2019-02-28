@@ -2,34 +2,18 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 
-Display                  *display;
-Atom                     prop_root_pmap;
-struct Background_screen *screens;
-unsigned int             num_screens;
+int               screen_number;
+Display           *display;
+Window            root;
+Colormap          cmap;
+Visual            *visual;
+XWindowAttributes root_attr;
+Atom              prop_root_pmap;
 
 bool do_anim = false;
 
-/**
- * Properties of a used screen
- */
-struct Background_screen {
-        int screen_number;
-        Window root;
-        Colormap cmap;
-        Visual *visual;
-        XWindowAttributes root_attr;
-};
-
-/**
- * A pixmap with the screen to draw it on
- */
-struct Background_screen_pmap {
-        Pixmap p;
-        struct Background_screen *s;
-};
-
 struct Background_frame{
-        struct Background_screen_pmap *sp;
+        Pixmap p;
         unsigned int dur;
 };
 
