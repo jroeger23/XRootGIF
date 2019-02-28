@@ -7,26 +7,28 @@
 
 #ifdef HAVE_XRANDR
 #include <X11/extensions/Xrandr.h>
+#elif defined(HAVE_XINERAMA)
+#include <X11/extensions/Xinerama.h>
 #endif
 
 #include "globals.h"
 
 void pmap_allocate_auto(Pixmap *pmap, DATA32 *data, int width, int height)
 {
-#ifdef HAVE_XRANDR
         if(num_monitors < 2) {
                 /* per monitor is not needed */
                 pmap_allocate_scale(pmap, data, width, height);
                 return;
         }
-#endif
 
         switch(opts.fitting) {
         case scale_per_monitor:
-#ifdef HAVE_XRANDR
+
+#if defined HAVE_XRANDR || defined(HAVE_XINERAMA) /* One of them must be installed */
                 pmap_allocate_scale_per_monitor(pmap, data, width, height);
                 return;
 #endif
+
                 /* fallthrough */
         case scale_across_monitor:
                 pmap_allocate_scale(pmap, data, width, height);
@@ -67,10 +69,13 @@ void pmap_allocate_scale(Pixmap *pmap, DATA32 *data, int width, int height)
 
 void pmap_allocate_scale_per_monitor(Pixmap *pmap, DATA32 *data, int width, int height)
 {
+#if defined HAVE_XRANDR || defined(HAVE_XINERAMA)
         Imlib_Image img, img_scaled;
 
 #ifdef HAVE_XRANDR
         XRRMonitorInfo *monitor;
+#elif defined(HAVE_XINERAMA)
+        XineramaScreenInfo *screen;
 #endif
 
         /* Create pixmap */
@@ -85,16 +90,25 @@ void pmap_allocate_scale_per_monitor(Pixmap *pmap, DATA32 *data, int width, int 
 
         /* Render data on pixmap at each monitor's position with imlib2 */
         for(int i = 0; i < num_monitors; ++i) {
+
 #ifdef HAVE_XRANDR
                 monitor = &monitors[i];
+#elif defined(HAVE_XINERAMA)
+                screen = &screens[i];
 #endif
 
                 imlib_context_set_image(img);
+
 #ifdef HAVE_XRANDR
                 img_scaled = imlib_create_cropped_scaled_image(
                         0, 0, width, height, monitor->width,
                         monitor->height);
+#elif defined(HAVE_XINERAMA)
+                img_scaled = imlib_create_cropped_scaled_image(
+                        0, 0, width, height, screen->width,
+                        screen->height);
 #endif
+
                 imlib_context_set_image(img_scaled);
                 imlib_context_set_display(display);
                 imlib_context_set_visual(visual);
@@ -104,12 +118,17 @@ void pmap_allocate_scale_per_monitor(Pixmap *pmap, DATA32 *data, int width, int 
                 imlib_context_set_dither(1);
                 imlib_context_set_blend(1);
                 imlib_context_set_angle(0);
+
 #ifdef HAVE_XRANDR
                 imlib_render_image_on_drawable(monitor->x, monitor->y);
+#elif defined(HAVE_XINERAMA)
+                imlib_render_image_on_drawable(screen->x_org, screen->y_org);
 #endif
+
                 imlib_free_image();
         }
 
         imlib_context_set_image(img);
         imlib_free_image();
+#endif /* HAVE_XINERAMA or HAVE_XRANDR */
 }
