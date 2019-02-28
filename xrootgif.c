@@ -39,6 +39,10 @@
 #include <signal.h>
 #include <getopt.h>
 
+#ifdef HAVE_XRANDR
+#include <X11/extensions/Xrandr.h>
+#endif
+
 #define EXIT_ON_ERROR 1
 
 #define HELP_TEXT "" \
@@ -124,6 +128,11 @@ static int prepare()
                 goto exit;
         }
 
+#ifdef HAVE_XRANDR
+        monitors = XRRGetMonitors(display, root, true, &num_monitors);
+        sformat(verbose,"Detected %d active monitors\n", num_monitors);
+#endif
+
         cmap = DefaultColormap(display, screen_number);
 
         visual = DefaultVisual(display, screen_number);
@@ -140,6 +149,12 @@ static int cleanup()
         }
 
         free(Background_anim.frames);
+
+#ifdef HAVE_XRANDR
+        XRRFreeMonitors(monitors);
+#endif
+
+        XCloseDisplay(display);
 
         return 0;
 }
@@ -183,6 +198,8 @@ static int parse_args(int argc, char **argv)
                 {"quiet", no_argument, NULL, 'q'},
                 {"Quiet", no_argument, NULL, 'Q'},
                 {"help", no_argument, NULL, 'h'},
+                {"scale-per-monitor", no_argument, NULL, -127},
+                {"scale-across-monitor", no_argument, NULL, -126},
                 {NULL, no_argument, NULL, 0}
         };
 
@@ -192,6 +209,7 @@ static int parse_args(int argc, char **argv)
         opts.target_fps = 5.0;
         opts.performance = false;
         opts.do_test = false;
+        opts.fitting = scale_per_monitor;
 
         while( (c = getopt_long(argc, argv, optstring, longopts, &longind)) != -1) {
                 switch(c) {
@@ -229,6 +247,17 @@ static int parse_args(int argc, char **argv)
                 case 'h':
                         sprintln(HELP_TEXT, normal);
                         exit(0);
+                case -127: /* scale-per-monitor */
+                        opts.fitting = scale_per_monitor;
+#ifndef HAVE_XRANDR
+                        sprintln("XRandR extension missing, cannot scale per monitor"
+                                 " falling back to scale across monitor...", warn);
+                        // Note: pixmap_alloc will handle XRandR absence
+#endif
+                        break;
+                case -126: /* scale-across-monitor */
+                        opts.fitting = scale_across_monitor;
+                        break;
                 }
         }
 
@@ -255,8 +284,6 @@ int main(int argc, char **argv)
         anim_loop();
 
         cleanup();
-
-        XCloseDisplay(display);
 
         return 0;
 }
