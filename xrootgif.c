@@ -75,7 +75,7 @@
 "  avoided by using the performance mode, which will simply downscale\n"\
 "  the framerate.\n"\
 
-int cleanup();
+static int cleanup();
 
 void interrupt_handler(int i)
 {
@@ -96,7 +96,7 @@ int error_handler(Display *d, XErrorEvent *e)
         return 0;
 }
 
-int prepare()
+static int prepare()
 {
         int ret = 0;
 
@@ -132,7 +132,7 @@ exit:
         return ret;
 }
 
-int cleanup()
+static int cleanup()
 {
         sprintln("Cleanung up...", verbose);
         for(int i = 0; i < Background_anim.num; ++i) {
@@ -144,7 +144,7 @@ int cleanup()
         return 0;
 }
 
-void anim_loop()
+static void anim_loop()
 {
         struct Background_frame *f;
 
@@ -166,7 +166,7 @@ void anim_loop()
         }
 }
 
-int parse_args(int argc, char **argv)
+static int parse_args(int argc, char **argv)
 {
         double tmp;
         char c;
