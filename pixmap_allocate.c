@@ -9,10 +9,10 @@
 
 void pmap_allocate_auto(Pixmap *pmap, DATA32 *data, int width, int height)
 {
-        pmap_allocate_crop(pmap, data, width, height);
+        pmap_allocate_scale(pmap, data, width, height);
 }
 
-void pmap_allocate_crop(Pixmap *pmap, DATA32 *data, int width, int height)
+void pmap_allocate_scale(Pixmap *pmap, DATA32 *data, int width, int height)
 {
         Imlib_Image img, img_scaled;
 

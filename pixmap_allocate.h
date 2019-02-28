@@ -6,6 +6,6 @@
 
 void pmap_allocate_auto(Pixmap *pmap, DATA32 *data, int width, int height);
 
-void pmap_allocate_crop(Pixmap *pmap, DATA32 *data, int width, int height);
+void pmap_allocate_scale(Pixmap *pmap, DATA32 *data, int width, int height);
 
 #endif // __PIXMAP_ALLOCATE_H_

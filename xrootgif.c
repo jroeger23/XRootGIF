@@ -39,11 +39,10 @@
 #include <signal.h>
 #include <getopt.h>
 
-#define VERSION 1
 #define EXIT_ON_ERROR 1
 
 #define HELP_TEXT "" \
-"XRootGIF 1.0\n" \
+"XRootGIF "VERSION"\n" \
 "A simple program to display GIFs as X root, targeting performance\n" \
 "\n" \
 "Usage: d:S:s:apt:TqQh [image]\n" \
@@ -76,7 +75,7 @@
 "  avoided by using the performance mode, which will simply downscale\n"\
 "  the framerate.\n"\
 
-int unload_pixmaps();
+int cleanup();
 
 void interrupt_handler(int i)
 {
@@ -91,7 +90,7 @@ int error_handler(Display *d, XErrorEvent *e)
         error_str[sizeof(error_str)-1] = 0;
         eformat(normal, "Error: %s\n", error_str);
         if(EXIT_ON_ERROR) {
-                unload_pixmaps();
+                cleanup();
                 exit(e->error_code);
         }
         return 0;
@@ -133,7 +132,7 @@ exit:
         return ret;
 }
 
-int unload_pixmaps()
+int cleanup()
 {
         sprintln("Cleanung up...", verbose);
         for(int i = 0; i < Background_anim.num; ++i) {
@@ -215,7 +214,7 @@ int parse_args(int argc, char **argv)
                         break;
                 case 't':
                         tmp = atof(optarg);
-                        if(tmp> 0.0)
+                        if(tmp > 0.0)
                                 opts.target_fps = tmp;
                         break;
                 case 'T':
@@ -225,7 +224,7 @@ int parse_args(int argc, char **argv)
                         output.level = normal;
                         break;
                 case 'Q':
-                        output.level = -1;
+                        output.level = none;
                         break;
                 case 'h':
                         sprintln(HELP_TEXT, normal);
@@ -255,7 +254,7 @@ int main(int argc, char **argv)
 
         anim_loop();
 
-        unload_pixmaps();
+        cleanup();
 
         XCloseDisplay(display);
 

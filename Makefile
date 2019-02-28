@@ -1,9 +1,11 @@
 ##
 # XRootGif
 #
+VERSION=1.3
 CC= gcc
+DEFINES= -D VERSION=\"$(VERSION)\"
 CFLAGS = -Wall -lX11 -lgif -lImlib2 -zrelro -znow
-ALLCFLAGS = $(CFLAGS) $(shell echo | gcc -xc -E -v - 2>&1 | grep -E '^\s' | sed '1d;s/^\s/ -I/' | tr '\n' ' ') # Explictly include system libraries for cdb
+ALLCFLAGS = $(CFLAGS) $(DEFINES) $(shell echo | gcc -xc -E -v - 2>&1 | grep -E '^\s' | sed '1d;s/^\s/ -I/' | tr '\n' ' ') # Explictly include system libraries for cdb
 OBJ= xrootgif.o globals.o output.o sample.o gif.o pixmap_allocate.o
 
 pkgname=xrootgif

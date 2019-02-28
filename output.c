@@ -10,7 +10,7 @@ output_t output = { .level = verbose };
 #define PREFIX(FD, L) write(FD, prefixes[L], prefixes_len[L]);
 
 static const char* prefixes[] = {
-        "",     /* Normal */
+        "",      /* Normal */
         "[W] ",  /* Warn */
         "[V] ",  /* Verbose */
         "[D] "   /* Debug */

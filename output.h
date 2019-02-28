@@ -2,6 +2,7 @@
 #define __OUTPUT_H_
 
 typedef enum {
+        none    = -1,   /* Only used to set output.level */
         normal  = 0,    /* Normal output */
         warn    = 1,    /* Show warnings */
         verbose = 2,    /* Maximum information */
