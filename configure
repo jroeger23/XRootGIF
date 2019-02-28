@@ -1,0 +1,23 @@
+#/bin/sh
+
+if [ -e "/usr/lib/libXrandr.so" ] ||
+       [ -e "/lib/libXrandr.so" ]; then
+
+    echo "Detected libXrandr!"
+    cat Makefile.in | sed 's/__DEFINES/-D HAVE_XRANDR/;s/__LIBRARIES/-lXrandr/' > Makefile
+
+elif [ -e "/usr/lib/libXinerama.so" ] ||
+         [ -e "/lib/libXinerama.so" ]; then
+
+    echo "Detected libXinerama!"
+    cat Makefile.in | sed 's/__DEFINES/-D HAVE_XINERAMA/;s/__LIBRARIES/-lXinerama/' > Makefile
+
+else
+
+    echo "Neither libXrandr or libXinerama found, XRootGIF won't be able to scale images per monitor..."
+    cat Makefile.in | sed 's/__DEFINES//;s/__LIBRARIES//' > Makefile
+
+fi
+
+# No extra CFLAGS needed
+sed -i 's/__CFLAGS//' Makefile
