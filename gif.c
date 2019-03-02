@@ -180,6 +180,7 @@ error:
         err = GifErrorString(ret);
         eformat(normal, "GIFLIB: %s\n", err);
 exit:
+        if(old_canvas) free(old_canvas);
         if(canvas) free(canvas);
         if(gif) DGifCloseFile(gif,&ret);
         return ret;
