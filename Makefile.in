@@ -1,5 +1,5 @@
 ##
-# XRootGif
+# XRootGIF
 #
 VERSION=1.4
 CC= gcc
@@ -36,6 +36,6 @@ clean:
 %.o: %.c
 	$(CC) $(ALLCFLAGS) -c $< -o $@
 
-.PHONY: xrootgif run clean debug debug_flag install
+.PHONY: xrootgif run clean debug debug_flag install uninstall
 
 # end
