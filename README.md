@@ -67,3 +67,8 @@ To compile, simply run
 ./configure && make
 ```
 
+A list of available configuration options can be obtained with
+
+``` sh
+./configure -h
+```
