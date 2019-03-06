@@ -38,11 +38,6 @@ int daemon_run(daemon_task_t **tasks, void **argv)
         if(pid > 0)
                 exit(EXIT_SUCCESS);
 
-        /* close file handles */
-        for(int i = _SC_OPEN_MAX; i >= 0; --i) {
-                close(i);
-        }
-
         /* execute daemon tasks */
         while(tasks[index] != NULL) {
                 tasks[index](argv[index]);

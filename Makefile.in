@@ -7,12 +7,14 @@ DEFINES= -D VERSION=\"$(VERSION)\" __DEFINES
 LIBRARIES= -lX11 -lgif -lImlib2 __LIBRARIES
 CFLAGS = -Wall -zrelro -znow __CFLAGS
 ALLCFLAGS = $(CFLAGS) $(LIBRARIES) $(DEFINES) $(shell echo | gcc -xc -E -v - 2>&1 | grep -E '^\s' | sed '1d;s/^\s/ -I/' | tr '\n' ' ') # Explictly include system libraries for cdb
+LNFLAGS= -zrelro -znow __LNFLAGS
 OBJ= xrootgif.o globals.o output.o sample.o gif.o pixmap_allocate.o daemon.o
 
+prefix=__PREFIX
 pkgname=xrootgif
 
 xrootgif: $(OBJ)
-	$(CC) $(ALLCFLAGS) $(OBJ) -o xrootgif
+	$(CC) $(LNFLAGS) $(LIBRARIES) $(OBJ) -o xrootgif
 
 run: xrootgif
 	./xrootgif $(ARGS)

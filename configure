@@ -1,23 +1,92 @@
 #/bin/sh
 
-if [ -e "/usr/lib/libXrandr.so" ] ||
-       [ -e "/lib/libXrandr.so" ]; then
+enable_randr() {
+    sed -i 's/__DEFINES/-D HAVE_XRANDR/;s/__LIBRARIES/-lXrandr/' Makefile
+}
 
-    echo "Detected libXrandr!"
-    cat Makefile.in | sed 's/__DEFINES/-D HAVE_XRANDR/;s/__LIBRARIES/-lXrandr/' > Makefile
+enable_xinerama() {
+    sed -i 's/__DEFINES/-D HAVE_XINERAMA/;s/__LIBRARIES/-lXinerama/' Makefile
+}
 
-elif [ -e "/usr/lib/libXinerama.so" ] ||
-         [ -e "/lib/libXinerama.so" ]; then
+autodetect() {
+    if [ -e "/usr/lib/libXrandr.so" ] ||
+           [ -e "/lib/libXrandr.so" ]; then
 
-    echo "Detected libXinerama!"
-    cat Makefile.in | sed 's/__DEFINES/-D HAVE_XINERAMA/;s/__LIBRARIES/-lXinerama/' > Makefile
+        echo "Detected libXrandr!"
+        enable_randr
 
+    elif [ -e "/usr/lib/libXinerama.so" ] ||
+             [ -e "/lib/libXinerama.so" ]; then
+
+        echo "Detected libXinerama!"
+        enable_xinerama
+
+    else
+
+        echo "Neither libXrandr or libXinerama found, XRootGIF won't be able to scale images per monitor..."
+        sed -i 's/__DEFINES//;s/__LIBRARIES//' Makefile
+
+    fi
+}
+
+help() {
+    cat <<EOF
+Configuration available:
+    --force-xinerama
+    --force-randr
+    --prefix=
+    --cflags=
+    --lnflags=
+EOF
+    exit 0
+}
+
+rm Makefile
+cp Makefile.in Makefile
+
+while getopts "h-:" opt; do
+    case $opt in
+        -)
+            OPTNAME=${OPTARG%=*}
+            OPTVAL=${OPTARG#*=}
+            case "$OPTNAME" in
+                help)
+                    help
+                    ;;
+                force-xinerama)
+                    do_force_xinerama="true"
+                    ;;
+                force-randr)
+                    do_force_randr="true"
+                    ;;
+                prefix)
+                    prefix="$OPTVAL"
+                    ;;
+                cflags)
+                    cflags="$OPTVAL"
+                    ;;
+                lnflags)
+                    lnflags="$OPTVAL"
+                    ;;
+            esac
+            ;;
+        h)
+            help
+            ;;
+    esac
+done
+
+if [ -n "$do_force_xinerama" ] && [ -n "$do_force_randr" ]; then
+    echo "Cannot force randr and xinerama at the same time!"
+    exit 1
+elif [ -n "$do_force_xinerama" ]; then
+     enable_xinerama
+elif [ -n "$do_force_randr" ]; then
+     enable_randr
 else
-
-    echo "Neither libXrandr or libXinerama found, XRootGIF won't be able to scale images per monitor..."
-    cat Makefile.in | sed 's/__DEFINES//;s/__LIBRARIES//' > Makefile
-
+    autodetect
 fi
 
-# No extra CFLAGS needed
-sed -i 's/__CFLAGS//' Makefile
+sed -i 's@__CFLAGS@'"$cflags"'@' Makefile
+sed -i 's@__LNFLAGS@'"$lnflags"'@' Makefile
+sed -i 's@__PREFIX@'"$prefix"'@' Makefile
