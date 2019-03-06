@@ -55,6 +55,7 @@ extern struct {
         bool performance;
         double target_fps;
         bool do_test;
+        bool daemon;
         enum image_fitting_t fitting;
 } opts;
 

@@ -26,6 +26,7 @@
 #include "output.h"
 #include "sample.h"
 #include "gif.h"
+#include "daemon.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -211,6 +212,7 @@ static int parse_args(int argc, char **argv)
                 {"help", no_argument, NULL, 'h'},
                 {"scale-per-monitor", no_argument, NULL, -127},
                 {"scale-across-monitor", no_argument, NULL, -126},
+                {"daemon", no_argument, NULL, -125},
                 {NULL, no_argument, NULL, 0}
         };
 
@@ -220,6 +222,7 @@ static int parse_args(int argc, char **argv)
         opts.target_fps = 5.0;
         opts.performance = false;
         opts.do_test = false;
+        opts.daemon = false;
         opts.fitting = scale_per_monitor;
 
         while( (c = getopt_long(argc, argv, optstring, longopts, &longind)) != -1) {
@@ -271,6 +274,9 @@ static int parse_args(int argc, char **argv)
                 case -126: /* scale-across-monitor */
                         opts.fitting = scale_across_monitor;
                         break;
+                case -125: /* daemon */
+                        opts.daemon = true;
+                        break;
                 }
         }
 
@@ -294,9 +300,21 @@ int main(int argc, char **argv)
         else
                 load_pixmaps_from_image();
 
-        anim_loop();
+        if(opts.daemon) {
+                daemon_task_t *tasks[] = {
+                        anim_loop,
+                        (daemon_task_t*)cleanup,
+                        NULL
+                };
+                void *task_argv[] = {
+                        NULL, NULL
+                };
+                return daemon_run(tasks, task_argv);
+        } else {
+                anim_loop();
 
-        cleanup();
+                cleanup();
+        }
 
         return 0;
 }
