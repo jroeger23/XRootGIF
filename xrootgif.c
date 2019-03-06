@@ -75,6 +75,8 @@
 "       Scales the image on each monitor (default)\n"\
 "  --scale-across-monitor\n" \
 "       Scales the image across all monitors\n"\
+"  --daemon\n" \
+"       After loading the image, fork of a daemon and exit\n"\
 "  -h | --help\n" \
 "\n"\
 "Performance:\n"\

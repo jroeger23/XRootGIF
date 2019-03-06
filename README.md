@@ -26,6 +26,8 @@ Usage: ./xrootgif d:S:s:apt:TqQh [image]
        Scales the image on each monitor (default)
   --scale-across-monitor
        Scales the image across all monitors
+  --daemon
+       After loading the image, fork of a daemon and exit
   -h | --help
 ```
 
