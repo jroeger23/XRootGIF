@@ -2,7 +2,7 @@
 pkgname=xrootgif
 pkgver=1.4.1
 pkgrel=1
-pkgdesc="A simple program to display GIFs as X root, targeting performance"
+pkgdesc="A simple program for setting animated wallpapers, targeting performance"
 arch=('x86_64')
 url="https://github.com/VipeOut23/XRootGIF"
 license=('custom:MIT')

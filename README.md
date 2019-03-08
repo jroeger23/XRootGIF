@@ -1,5 +1,5 @@
 # XRootGIF [![xrootgif](https://img.shields.io/aur/version/xrootgif.svg)](https://aur.archlinux.org/packages/xrootgif/)
-A simple program to display GIFs as X root, targeting performance
+A simple program for setting animated wallpapers, targeting performance
 
 # Usage
 ``` text
@@ -44,7 +44,6 @@ the framerate.
 
 - more image fitting modes
 - configuration files
-- daemon mode
 - other animation formats (webm, apng, ...)
 
 # Building

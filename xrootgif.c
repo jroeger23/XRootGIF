@@ -50,7 +50,7 @@
 
 #define HELP_TEXT "" \
 "XRootGIF "VERSION"\n" \
-"A simple program to display GIFs as X root, targeting performance\n" \
+"A simple program for setting animated wallpapers, targeting performance\n" \
 "\n" \
 "Usage: d:S:s:apt:TqQh [image]\n" \
 "  -d | --display [display]\n" \
