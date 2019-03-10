@@ -1,0 +1,31 @@
+#compdef __PKGNAME
+local context state state_descr line
+
+___PKGNAME() {
+  _arguments -s \
+      {-d,--display=}'[X-Display]:display:->dpy' \
+      {-S,--screen=}'[X-Screen]:screen:->scr' \
+      {-s,--speed=}'[Playback speed multiplier]:speed:->spd' \
+      {-a,--anti-aliasing}'[Enable Anti-Aliasing]' \
+      {-p,--performance}'[Performance Mode]' \
+      {-t,--target-fps=}'[Target FPS]:fps:->fps' \
+      {-T,--test-pattern}'[A little test animation]' \
+      {-q,--quiet}'[Only print basic information]' \
+      {-Q,--Quiet}'[No output]' \
+      '--scale-per-monitor[Scale the image in each monitor]' \
+      '--scale-across-monitor[Scale the image across all monitors]' \
+      '--daemon[Do the animation as daemon]' \
+      {-h,--help}'[Help]' \
+      '*:file:_files'
+
+  case "$state" in
+      dpy)
+      ;;
+      scr)
+      ;;
+      spd)
+      ;;
+      fps)
+      ;;
+  esac
+}

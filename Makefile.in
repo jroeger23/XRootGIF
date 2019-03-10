@@ -1,7 +1,7 @@
 ##
 # XRootGIF
 #
-VERSION=1.4
+VERSION=1.4.2
 CC= gcc
 DEFINES= -D VERSION=\"$(VERSION)\" __DEFINES
 LIBRARIES= -lX11 -lgif -lImlib2 __LIBRARIES
@@ -11,7 +11,7 @@ LNFLAGS= -zrelro -znow __LNFLAGS
 OBJ= xrootgif.o globals.o output.o sample.o gif.o pixmap_allocate.o daemon.o
 
 prefix=__PREFIX
-pkgname=xrootgif
+pkgname=__PKGNAME
 
 xrootgif: $(OBJ)
 	$(CC) $(LNFLAGS) $(LIBRARIES) $(OBJ) -o xrootgif
@@ -25,12 +25,14 @@ debug_flag:
 	$(eval ALLCFLAGS += -g)
 
 install: xrootgif
-	install -D -m755 xrootgif $(prefix)/usr/bin/xrootgif
+	install -D -m755 xrootgif $(prefix)/usr/bin/$(pkgname)
 	install -D -m644 LICENSE.txt $(prefix)/usr/share/licenses/$(pkgname)/LICENSE.txt
+	install -D -m644 utils/zsh-completion $(prefix)/usr/share/zsh/site-functions/_$(pkgname)
 
 uninstall:
-	rm $(prefix)/usr/bin/xrootgif
+	rm $(prefix)/usr/bin/$(pkgname)
 	rm $(prefix)/usr/share/licenses/$(pkgname)/LICENSE.txt
+	rm $(prefix)/usr/share/zsh/site-functions/_xrootgif
 
 clean:
 	rm -f $(OBJ) xrootgif

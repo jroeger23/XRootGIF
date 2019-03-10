@@ -29,6 +29,13 @@ autodetect() {
     fi
 }
 
+check_pkgname() {
+    [[ $pkgname =~ ^[A-Za-z0-9_-]+$ ]] || {
+        echo "Invalid pkgname"
+        exit 1
+    }
+}
+
 help() {
     cat <<EOF
 Configuration available:
@@ -37,12 +44,18 @@ Configuration available:
     --prefix=
     --cflags=
     --lnflags=
+    --pkgname=
 EOF
     exit 0
 }
 
 rm Makefile
 cp Makefile.in Makefile
+
+rm utils/zsh-completion
+cp utils/zsh-completion.in utils/zsh-completion
+
+pkgname=xrootgif
 
 while getopts "h-:" opt; do
     case $opt in
@@ -68,6 +81,9 @@ while getopts "h-:" opt; do
                 lnflags)
                     lnflags="$OPTVAL"
                     ;;
+                pkgname)
+                    pkgname="$OPTVAL"
+                    ;;
             esac
             ;;
         h)
@@ -75,6 +91,8 @@ while getopts "h-:" opt; do
             ;;
     esac
 done
+
+check_pkgname
 
 if [ -n "$do_force_xinerama" ] && [ -n "$do_force_randr" ]; then
     echo "Cannot force randr and xinerama at the same time!"
@@ -90,3 +108,6 @@ fi
 sed -i 's@__CFLAGS@'"$cflags"'@' Makefile
 sed -i 's@__LNFLAGS@'"$lnflags"'@' Makefile
 sed -i 's@__PREFIX@'"$prefix"'@' Makefile
+sed -i 's@__PKGNAME@'"$pkgname"'@' Makefile
+
+sed -i 's@__PKGNAME@'"$pkgname"'@' utils/zsh-completion

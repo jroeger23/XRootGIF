@@ -5,3 +5,4 @@ compile_commands.json
 xrootgif
 todo.org
 Makefile
+utils/zsh-completion
