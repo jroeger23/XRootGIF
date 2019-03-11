@@ -25,17 +25,17 @@ debug_flag:
 	$(eval ALLCFLAGS += -g)
 
 install: xrootgif
-	install -D -m755 xrootgif $(prefix)/usr/bin/$(pkgname)
-	install -D -m644 LICENSE.txt $(prefix)/usr/share/licenses/$(pkgname)/LICENSE.txt
-	install -D -m644 utils/zsh-completion $(prefix)/usr/share/zsh/site-functions/_$(pkgname)
+	@install -vD -m755 xrootgif $(prefix)/usr/bin/$(pkgname)
+	@install -vD -m644 LICENSE.txt $(prefix)/usr/share/licenses/$(pkgname)/LICENSE.txt
+	@install -vD -m644 utils/zsh-completion $(prefix)/usr/share/zsh/site-functions/_$(pkgname)
 
 uninstall:
-	rm $(prefix)/usr/bin/$(pkgname)
-	rm $(prefix)/usr/share/licenses/$(pkgname)/LICENSE.txt
-	rm $(prefix)/usr/share/zsh/site-functions/_xrootgif
+	@rm -v $(prefix)/usr/bin/$(pkgname)
+	@rm -v $(prefix)/usr/share/licenses/$(pkgname)/LICENSE.txt
+	@rm -v $(prefix)/usr/share/zsh/site-functions/_xrootgif
 
 clean:
-	rm -f $(OBJ) xrootgif
+	@rm -vf $(OBJ) xrootgif
 
 %.o: %.c
 	$(CC) $(ALLCFLAGS) -c $< -o $@

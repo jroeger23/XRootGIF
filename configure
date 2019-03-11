@@ -36,6 +36,21 @@ check_pkgname() {
     }
 }
 
+# Substitute functions #########################################################
+substitute_prefix() {
+    sed -i 's@__PREFIX@'"$prefix"'@' "$1"
+}
+substitute_cflags() {
+    sed -i 's@__CFLAGS@'"$cflags"'@' "$1"
+}
+substitute_lnflags() {
+    sed -i 's@__LNFLAGS@'"$lnflags"'@' "$1"
+}
+substitute_pkgname() {
+    sed -i 's@__PKGNAME@'"$pkgname"'@' "$1"
+}
+
+
 help() {
     cat <<EOF
 Configuration available:
@@ -105,9 +120,9 @@ else
     autodetect
 fi
 
-sed -i 's@__CFLAGS@'"$cflags"'@' Makefile
-sed -i 's@__LNFLAGS@'"$lnflags"'@' Makefile
-sed -i 's@__PREFIX@'"$prefix"'@' Makefile
-sed -i 's@__PKGNAME@'"$pkgname"'@' Makefile
+substitute_cflags Makefile
+substitute_lnflags Makefile
+substitute_prefix Makefile
+substitute_pkgname Makefile
 
-sed -i 's@__PKGNAME@'"$pkgname"'@' utils/zsh-completion
+substitute_pkgname  utils/zsh-completion
