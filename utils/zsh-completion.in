@@ -15,6 +15,7 @@ ___PKGNAME() {
       '--scale-per-monitor[Scale the image in each monitor]' \
       '--scale-across-monitor[Scale the image across all monitors]' \
       '--daemon[Do the animation as daemon]' \
+      '--version[Print version]' \
       {-h,--help}'[Help]' \
       '*:file:_files'
 

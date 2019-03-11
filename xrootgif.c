@@ -77,6 +77,8 @@
 "       Scales the image across all monitors\n"\
 "  --daemon\n" \
 "       After loading the image, fork of a daemon and exit\n"\
+"  --version\n" \
+"       Print version\n" \
 "  -h | --help\n" \
 "\n"\
 "Performance:\n"\
@@ -215,6 +217,7 @@ static int parse_args(int argc, char **argv)
                 {"scale-per-monitor", no_argument, NULL, -127},
                 {"scale-across-monitor", no_argument, NULL, -126},
                 {"daemon", no_argument, NULL, -125},
+                {"version", no_argument, NULL, -124},
                 {NULL, no_argument, NULL, 0}
         };
 
@@ -278,6 +281,10 @@ static int parse_args(int argc, char **argv)
                         break;
                 case -125: /* daemon */
                         opts.daemon = true;
+                        break;
+                case -124: /* version */
+                        sprintln("XRootGIF - "VERSION, normal);
+                        exit(0);
                         break;
                 }
         }
