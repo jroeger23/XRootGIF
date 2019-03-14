@@ -6,3 +6,5 @@ xrootgif
 todo.org
 Makefile
 utils/zsh-completion
+utils/bash-completion
+TAGS

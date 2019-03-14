@@ -1,0 +1,13 @@
+_xrootgif()
+{
+    local cur="$2"
+    local longopts="--display=,--screen=,--speed=,--anti-alias,--performance,\
+--target-fps=,--test-pattern,--quiet,--Quiet,--scale-per-monitor,\
+--scale-across-monitor,--daemon,--version,--help"
+
+    if [[ "$cur" == -* ]]; then
+        COMPREPLY=( $( local IFS=',' ; compgen -W "$longopts" -- "$cur" ) )
+    fi
+
+} &&
+complete -F _xrootgif __PKGNAME

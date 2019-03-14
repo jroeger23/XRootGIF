@@ -28,11 +28,13 @@ install: xrootgif
 	@install -vD -m755 xrootgif $(prefix)/usr/bin/$(pkgname)
 	@install -vD -m644 LICENSE.txt $(prefix)/usr/share/licenses/$(pkgname)/LICENSE.txt
 	@install -vD -m644 utils/zsh-completion $(prefix)/usr/share/zsh/site-functions/_$(pkgname)
+	@install -vD -m644 utils/bash-completion $(prefix)/usr/share/bash-completion/completions/$(pkgname)
 
 uninstall:
 	@rm -v $(prefix)/usr/bin/$(pkgname)
 	@rm -v $(prefix)/usr/share/licenses/$(pkgname)/LICENSE.txt
-	@rm -v $(prefix)/usr/share/zsh/site-functions/_xrootgif
+	@rm -v $(prefix)/usr/share/zsh/site-functions/_$(pkgname)
+	@rm -v $(prefix)/usr/share/bash-completion/completions/$(pkgname)
 
 clean:
 	@rm -vf $(OBJ) xrootgif

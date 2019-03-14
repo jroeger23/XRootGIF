@@ -64,11 +64,10 @@ EOF
     exit 0
 }
 
-rm Makefile
-cp Makefile.in Makefile
-
-rm utils/zsh-completion
-cp utils/zsh-completion.in utils/zsh-completion
+# Setup files ##################################################################
+cp -vf Makefile.in Makefile
+cp -vf utils/zsh-completion.in utils/zsh-completion
+cp -vf utils/bash-completion.in utils/bash-completion
 
 pkgname=xrootgif
 
@@ -126,3 +125,4 @@ substitute_prefix Makefile
 substitute_pkgname Makefile
 
 substitute_pkgname  utils/zsh-completion
+substitute_pkgname  utils/bash-completion
