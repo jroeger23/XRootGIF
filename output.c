@@ -5,6 +5,8 @@
 #include <string.h>
 #include <stdarg.h>
 
+#define STRING_MAX 4096
+
 output_t output = { .level = verbose };
 
 #define PREFIX(FD, L) write(FD, prefixes[L], prefixes_len[L]);
@@ -28,7 +30,7 @@ void sprint(char *str, output_level_t l)
         if(output.level < l) return;
 
         PREFIX(STDOUT_FILENO, l);
-        write(STDOUT_FILENO, str, strlen(str));
+        write(STDOUT_FILENO, str, strnlen(str, STRING_MAX));
 }
 
 void eprint(char *str, output_level_t l)
@@ -36,7 +38,7 @@ void eprint(char *str, output_level_t l)
         if(output.level < l) return;
 
         PREFIX(STDERR_FILENO, l);
-        write(STDERR_FILENO, str, strlen(str));
+        write(STDERR_FILENO, str, strnlen(str, STRING_MAX));
 }
 
 void sprintln(char *str, output_level_t l)
