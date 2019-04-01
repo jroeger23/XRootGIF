@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
+#include <time.h>
 
 #ifdef HAVE_XRANDR
 #include <X11/extensions/Xrandr.h>
@@ -26,7 +27,7 @@ bool do_anim = false;
 
 struct Background_frame{
         Pixmap p;
-        unsigned int dur;
+        struct timespec dur;
 };
 
 struct {

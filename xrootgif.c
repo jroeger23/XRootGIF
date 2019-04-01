@@ -39,6 +39,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <getopt.h>
+#include <time.h>
 
 #ifdef HAVE_XRANDR
 #include <X11/extensions/Xrandr.h>
@@ -191,7 +192,7 @@ static void anim_loop()
                 XSetWindowBackgroundPixmap(display, root, f->p);
                 XClearWindow(display, root);
 		XFlush(display);
-                usleep(f->dur);
+                nanosleep(&f->dur, NULL);
                 Background_anim.cur += 1;
                 Background_anim.cur %= Background_anim.num;
         }

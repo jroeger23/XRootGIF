@@ -110,7 +110,7 @@ int load_pixmaps_from_image()
         int                  ret;
         int                  color_total = 0;
         double               avg_delay = 0;
-        int                  delay;
+        long                 delay;
         const char           *err;
         GifFileType          *gif = NULL;
         size_t               canvas_size;
@@ -142,8 +142,8 @@ int load_pixmaps_from_image()
 
                 /* set delay time */
                 delay = (gcb.DelayTime) ? gcb.DelayTime : 1; // Min delay time
-                Background_anim.frames[((i==0) ? gif->ImageCount : i)-1].dur
-                        = opts.speed*(10000*delay);
+                Background_anim.frames[((i==0) ? gif->ImageCount : i)-1].dur.tv_nsec
+                        = (opts.speed*delay)*10000000L;
                 avg_delay += delay;
 
                 sformat(verbose, "Image %d -- Top: %d; Left, %d; Width: %d; Height: %d; Delay: %d; Interlace: %s\n", i,
@@ -166,7 +166,7 @@ int load_pixmaps_from_image()
         if(opts.performance && opts.target_fps < avg_delay) {
                 opts.speed = avg_delay / opts.target_fps;
                 for(int i = 0; i < Background_anim.num; ++i) {
-                        Background_anim.frames[i].dur *= opts.speed;
+                        Background_anim.frames[i].dur.tv_nsec *= opts.speed;
                 }
         }
 

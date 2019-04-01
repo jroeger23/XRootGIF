@@ -1,7 +1,7 @@
 ##
 # XRootGIF
 #
-VERSION=1.4.2
+VERSION=1.4.2-dev
 CC= gcc
 DEFINES= -D VERSION=\"$(VERSION)\" __DEFINES
 LIBRARIES= -lX11 -lgif -lImlib2 __LIBRARIES
