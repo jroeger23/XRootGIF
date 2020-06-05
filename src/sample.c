@@ -20,10 +20,10 @@ int load_pixmap_sample()
         XAllocNamedColor(display, cmap, "red", &c3, &c3);
         XAllocNamedColor(display, cmap, "black", &c4, &c4);
 
-        Background_anim.frames[0].dur.tv_sec = 3;
-        Background_anim.frames[1].dur.tv_sec = 3;
-        Background_anim.frames[2].dur.tv_sec = 3;
-        Background_anim.frames[3].dur.tv_sec = 3;
+        Background_anim.frames[0].dur = 300000;
+        Background_anim.frames[1].dur = 300000;
+        Background_anim.frames[2].dur = 300000;
+        Background_anim.frames[3].dur = 300000;
 
         gcv.foreground = c1.pixel;
         gc = XCreateGC(display, root, GCForeground, &gcv);
