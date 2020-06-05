@@ -4,8 +4,6 @@
 
 #ifdef HAVE_XRANDR
 #include <X11/extensions/Xrandr.h>
-#elif defined(HAVE_XINERAMA)
-#include <X11/extensions/Xinerama.h>
 #endif
 
 int               screen_number;
@@ -17,8 +15,6 @@ XWindowAttributes root_attr;
 Atom              prop_root_pmap;
 #ifdef HAVE_XRANDR
 XRRMonitorInfo *monitors;
-#elif defined(HAVE_XINERAMA)
-XineramaScreenInfo *screens;
 #endif
 int            num_monitors = 1;
 

@@ -42,8 +42,6 @@
 
 #ifdef HAVE_XRANDR
 #include <X11/extensions/Xrandr.h>
-#elif defined(HAVE_XINERAMA)
-#include <X11/extensions/Xinerama.h>
 #endif
 
 #define EXIT_ON_ERROR 1
@@ -142,9 +140,6 @@ static int prepare()
 #ifdef HAVE_XRANDR
         monitors = XRRGetMonitors(display, root, true, &num_monitors);
         sformat(verbose,"Detected %d active XRandR monitors\n", num_monitors);
-#elif defined(HAVE_XINERAMA)
-        screens = XineramaQueryScreens(display, &num_monitors);
-        sformat(verbose,"Detected %d active Xinerama screens\n", num_monitors);
 #endif
 
         cmap = DefaultColormap(display, screen_number);
@@ -166,8 +161,6 @@ static int cleanup()
 
 #ifdef HAVE_XRANDR
         if(monitors) XRRFreeMonitors(monitors);
-#elif defined(HAVE_XINERAMA)
-        if(screens) XFree(screens);
 #endif
 
         XCloseDisplay(display);
@@ -270,8 +263,8 @@ static int parse_args(int argc, char **argv)
                         opts.fitting = scale_per_monitor;
 
                         /* only notify when wanted explicitly */
-#if !defined(HAVE_XRANDR) && !defined(HAVE_XINERAMA)
-                        sprintln("XRandR or Xinerama extension missing, cannot scale per monitor"
+#if !defined(HAVE_XRANDR)
+                        sprintln("XRandR extension missing, cannot scale per monitor"
                                  " falling back to scale across monitors...", warn);
 #endif
 
