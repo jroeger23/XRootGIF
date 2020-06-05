@@ -43,11 +43,10 @@
 #ifdef HAVE_XRANDR
 #include <X11/extensions/Xrandr.h>
 #endif
-
+#define VERSION "1.4.2"
 #define EXIT_ON_ERROR 1
-
 #define HELP_TEXT "" \
-"XRootGIF \n" \
+"XRootGIF "VERSION"\n" \
 "A simple program for setting animated wallpapers, targeting performance\n" \
 "\n" \
 "Usage: d:S:s:apt:TqQh [image]\n" \
@@ -257,7 +256,7 @@ static int parse_args(int argc, char **argv)
                         output.level = none;
                         break;
                 case 'h':
-                       // sprintln(HELP_TEXT, normal);
+                        sprintln(HELP_TEXT, normal);
                         exit(0);
                 case -127: /* scale-per-monitor */
                         opts.fitting = scale_per_monitor;
@@ -276,8 +275,8 @@ static int parse_args(int argc, char **argv)
                         opts.daemon = true;
                         break;
                 case -124: /* version */
-                       // sprintln("XRootGIF - "VERSION, normal);
-                       // exit(0);
+                        sprintln("XRootGIF - "VERSION, normal);
+                        exit(0);
                         break;
                 }
         }
