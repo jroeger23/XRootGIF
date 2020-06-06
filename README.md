@@ -71,4 +71,4 @@ To compile, simply run
 ``` sh
 meson build && cd build && ninja
 ```
-
+You can disable multimonitor support by changing 'multimonitor_feature' in meson_options.txt
