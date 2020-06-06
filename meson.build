@@ -16,5 +16,6 @@ else
 	message('Xrandr not found, multimonitor support will not be included.')
 endif
 src_files = ['src/xrootgif.c', 'src/globals.c', 'src/output.c', 'src/sample.c', 'src/gif.c', 'src/pixmap_allocate.c', 'src/daemon.c']
-executable('xrootgif', src_files, dependencies : [x11_dep, imlib2_dep, xrandr_dep], include_directories : incdir)
+executable('xrootgif', src_files, dependencies : [x11_dep, imlib2_dep, xrandr_dep], include_directories : incdir, install : true)
+
 

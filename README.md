@@ -64,16 +64,12 @@ The following libraries are used by XRootGIF:
 Tools:
 
   - gcc
-  - make
+  - meson
+  - ninja 
 
 To compile, simply run
 
 ``` sh
-./configure && make
+meson build && cd build && ninja
 ```
 
-A list of available configuration options can be obtained with
-
-``` sh
-./configure -h
-```
