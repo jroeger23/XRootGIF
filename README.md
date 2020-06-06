@@ -58,7 +58,6 @@ The following libraries are used by XRootGIF:
   - libx11
   - giflib
   - imlib2
-  - (libXinerama)
   - (libXrandr)
 
 Tools:
