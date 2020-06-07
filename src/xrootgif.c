@@ -43,7 +43,7 @@
 #ifdef HAVE_XRANDR
 #include <X11/extensions/Xrandr.h>
 #endif
-#define VERSION "1.5.0"
+#define VERSION "1.5.1"
 #define EXIT_ON_ERROR 1
 #define HELP_TEXT "" \
 "XRootGIF "VERSION"\n" \

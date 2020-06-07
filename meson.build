@@ -1,4 +1,4 @@
-project('XRootGIF', 'c', license : 'MIT', version : '1.4.2', default_options : [ 'optimization=2', 'c_link_args=-lgif' ] )
+project('XRootGIF', 'c', license : 'MIT', version : '1.5.1', default_options : [ 'optimization=2', 'c_link_args=-lgif' ] )
 incdir = include_directories('src/')
 fsmod = import('fs')
 
