@@ -1,0 +1,1 @@
+option('multimonitor_feature', type : 'boolean', value : true)

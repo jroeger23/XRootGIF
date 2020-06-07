@@ -39,16 +39,12 @@
 #include <unistd.h>
 #include <signal.h>
 #include <getopt.h>
-#include <time.h>
 
 #ifdef HAVE_XRANDR
 #include <X11/extensions/Xrandr.h>
-#elif defined(HAVE_XINERAMA)
-#include <X11/extensions/Xinerama.h>
 #endif
-
+#define VERSION "1.4.2"
 #define EXIT_ON_ERROR 1
-
 #define HELP_TEXT "" \
 "XRootGIF "VERSION"\n" \
 "A simple program for setting animated wallpapers, targeting performance\n" \
@@ -143,35 +139,6 @@ static int prepare()
 #ifdef HAVE_XRANDR
         monitors = XRRGetMonitors(display, root, true, &num_monitors);
         sformat(verbose,"Detected %d active XRandR monitors\n", num_monitors);
-#elif defined(HAVE_XINERAMA)
-        screens = XineramaQueryScreens(display, &num_monitors);
-        sformat(verbose,"Detected %d active Xinerama screens\n", num_monitors);
-#endif
-
-#ifdef HAVE_XRANDR
-        char *dpy_name;
-        bool found_monitor = false;
-
-        /* We want the image to be on only one monitor */
-        if(opts.fitting == scale_partial) {
-
-                /* Search the monitor */
-                while(!found_monitor && partial_monitor_index < num_monitors) {
-                        partial_monitor_index++;        // Initialized with -1
-                        dpy_name = XGetAtomName(display, monitors[partial_monitor_index].name);
-                        if(strncmp(dpy_name, opts.monitor_name, 128) == 0) {
-                                sformat(normal, "Using %s as output.", dpy_name);
-                                found_monitor = true;
-                        }
-                        XFree(dpy_name);
-                }
-
-                if(!found_monitor) {
-                        eformat(normal, "Could not find monitor %s...\n", opts.monitor_name);
-                        ret = 3;
-                        goto exit;
-                }
-        }
 #endif
 
         cmap = DefaultColormap(display, screen_number);
@@ -193,8 +160,6 @@ static int cleanup()
 
 #ifdef HAVE_XRANDR
         if(monitors) XRRFreeMonitors(monitors);
-#elif defined(HAVE_XINERAMA)
-        if(screens) XFree(screens);
 #endif
 
         XCloseDisplay(display);
@@ -208,10 +173,6 @@ static void anim_loop()
 
         Background_anim.cur = 0;
 
-        if(opts.fitting == scale_partial) goto override;
-        else                              goto fast;
-
-fast:
         while(do_anim) {
                 f = &Background_anim.frames[Background_anim.cur];
 
@@ -222,24 +183,7 @@ fast:
                 XSetWindowBackgroundPixmap(display, root, f->p);
                 XClearWindow(display, root);
 		XFlush(display);
-                nanosleep(&f->dur, NULL);
-                Background_anim.cur += 1;
-                Background_anim.cur %= Background_anim.num;
-        }
-        return;
-override:
-        while(do_anim) {
-                //TODO: Override root pixmap somehow
-                f = &Background_anim.frames[Background_anim.cur];
-
-                /* Used for pseudo-transparency */
-                XChangeProperty(display, root, prop_root_pmap, XA_PIXMAP, 32,
-                                PropModeReplace, (unsigned char *) &f->p, 1);
-
-                XSetWindowBackgroundPixmap(display, root, f->p);
-                XClearWindow(display, root);
-		XFlush(display);
-                nanosleep(&f->dur, NULL);
+                usleep(f->dur);
                 Background_anim.cur += 1;
                 Background_anim.cur %= Background_anim.num;
         }
@@ -250,7 +194,7 @@ static int parse_args(int argc, char **argv)
         double tmp;
         char c;
         int longind = 0;
-        const char *optstring = "d:S:s:apt:TqQhm:";
+        const char *optstring = "d:S:s:apt:TqQh";
         struct option longopts[] = {
                 {"display", required_argument, NULL, 'd'},
                 {"screen", required_argument, NULL, 'S'},
@@ -262,7 +206,6 @@ static int parse_args(int argc, char **argv)
                 {"quiet", no_argument, NULL, 'q'},
                 {"Quiet", no_argument, NULL, 'Q'},
                 {"help", no_argument, NULL, 'h'},
-                {"scale-on-monitor", required_argument, NULL, 'm'},
                 {"scale-per-monitor", no_argument, NULL, -127},
                 {"scale-across-monitor", no_argument, NULL, -126},
                 {"daemon", no_argument, NULL, -125},
@@ -315,21 +258,12 @@ static int parse_args(int argc, char **argv)
                 case 'h':
                         sprintln(HELP_TEXT, normal);
                         exit(0);
-                case 'm':
-
-#ifdef HAVE_XRANDR
-                        opts.fitting = scale_partial;
-                        opts.monitor_name = optarg;
-#else
-                        sprintln("XRandR extension is missing, cannot scale on a specific monitor", warn);
-#endif
-                        break;
                 case -127: /* scale-per-monitor */
                         opts.fitting = scale_per_monitor;
 
                         /* only notify when wanted explicitly */
-#if !defined(HAVE_XRANDR) && !defined(HAVE_XINERAMA)
-                        sprintln("XRandR or Xinerama extension missing, cannot scale per monitor"
+#if !defined(HAVE_XRANDR)
+                        sprintln("XRandR extension missing, cannot scale per monitor"
                                  " falling back to scale across monitors...", warn);
 #endif
 
@@ -360,7 +294,7 @@ int main(int argc, char **argv)
         parse_args(argc, argv);
 
         if(prepare())
-               return EXIT_FAILURE;
+               return 1;
 
         if(opts.do_test)
                 load_pixmap_sample();
@@ -383,5 +317,5 @@ int main(int argc, char **argv)
                 cleanup();
         }
 
-        return EXIT_SUCCESS;
+        return 0;
 }

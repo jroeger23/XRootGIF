@@ -1,36 +1,37 @@
+#ifndef __GLOBALS_H_
+#define __GLOBALS_H_
+
 #include <stdbool.h>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
-#include <time.h>
 
 #ifdef HAVE_XRANDR
 #include <X11/extensions/Xrandr.h>
-#elif defined(HAVE_XINERAMA)
-#include <X11/extensions/Xinerama.h>
 #endif
 
-int               screen_number;
-Display           *display;
-Window            root;
-Colormap          cmap;
-Visual            *visual;
-XWindowAttributes root_attr;
-Atom              prop_root_pmap;
+extern int               screen_number;
+extern Display           *display;
+extern Window            root;
+extern Colormap          cmap;
+extern Visual            *visual;
+extern XWindowAttributes root_attr;
+extern Atom              prop_root_pmap;
 #ifdef HAVE_XRANDR
-XRRMonitorInfo *monitors;
-#elif defined(HAVE_XINERAMA)
-XineramaScreenInfo *screens;
+extern XRRMonitorInfo *monitors;
 #endif
-int            num_monitors = 1;
+/**
+ * Number of detected Xinerama screens or XRandR monitors
+ */
+extern int            num_monitors;
 
-bool do_anim = false;
+extern bool do_anim;
 
 struct Background_frame{
         Pixmap p;
-        struct timespec dur;
+        unsigned int dur;
 };
 
-struct {
+extern struct {
         struct Background_frame *frames;
         unsigned int num;
         unsigned int cur;
@@ -41,7 +42,7 @@ enum image_fitting_t{
         scale_per_monitor
 };
 
-struct {
+extern struct {
         char *image;
         char *display;
         char *screen;
@@ -53,3 +54,5 @@ struct {
         bool daemon;
         enum image_fitting_t fitting;
 } opts;
+
+#endif // __GLOBALS_H_

@@ -58,22 +58,17 @@ The following libraries are used by XRootGIF:
   - libx11
   - giflib
   - imlib2
-  - (libXinerama)
   - (libXrandr)
 
 Tools:
 
   - gcc
-  - make
+  - meson
+  - ninja 
 
 To compile, simply run
 
 ``` sh
-./configure && make
+meson build && cd build && ninja
 ```
-
-A list of available configuration options can be obtained with
-
-``` sh
-./configure -h
-```
+You can disable multimonitor support by changing 'multimonitor_feature' in meson_options.txt
