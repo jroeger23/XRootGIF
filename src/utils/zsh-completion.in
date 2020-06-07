@@ -1,7 +1,7 @@
-#compdef __PKGNAME
+#compdef xrootgif
 local context state state_descr line
 
-___PKGNAME() {
+_xrootgif() {
   _arguments -s \
       {-d,--display=}'[X-Display]:display:->dpy' \
       {-S,--screen=}'[X-Screen]:screen:->scr' \

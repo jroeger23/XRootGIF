@@ -10,4 +10,4 @@ _xrootgif()
     fi
 
 } &&
-complete -F _xrootgif __PKGNAME
+complete -F _xrootgif xrootgif
