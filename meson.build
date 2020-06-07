@@ -29,7 +29,7 @@ endif
 
 src_files = ['src/xrootgif.c', 'src/globals.c', 'src/output.c', 'src/sample.c', 'src/gif.c', 'src/pixmap_allocate.c', 'src/daemon.c']
 # Autocompletion files
-install_data(['src/utils/zsh-completion.in', 'src/utils/bash-completion.in'], rename : ['zsh/site-functions/xrootgif', 'bash-completion/completions/xrootgif'], install_dir : 'share')
+install_data(['src/utils/zsh-completion.in', 'src/utils/bash-completion.in'], rename : ['zsh/site-functions/_xrootgif', 'bash-completion/completions/xrootgif'], install_dir : 'share')
 # License
 install_data('src/LICENSE.txt',  install_dir : 'share/licenses/XRootGIF')
 
